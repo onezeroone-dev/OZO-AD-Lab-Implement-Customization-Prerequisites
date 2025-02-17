@@ -42,6 +42,7 @@ Class ADLIP {
     [String]  $ozoAdLabZipPath   = $null
     [String]  $ozoAdLabZipUri    = $null
     [String]  $winAdkFileName    = $null
+    [String]  $winAdkPath        = $null
     [String]  $winAdkFileUri     = $null
     [String]  $wingetExePath     = $null
     # PROPERTIES: PSCustomObjects
@@ -61,8 +62,9 @@ Class ADLIP {
         $this.ozoAdLabZipPath   = (Join-Path -Path $Env:USERPROFILE -ChildPath "Downloads\ozo-ad-lab-latest.zip")
         $this.ozoAdLabZipUri    = "https://api.github.com/repos/onezeroone-dev/OZO-AD-Lab/releases/latest"
         $this.winAdkFileName    = "adksetup.exe"
+        $this.winAdkPath         = (Join-Path -Path $this.downloadsDir -Childpath $this.winAdkFileName)
         $this.winAdkFileUri     = "https://download.microsoft.com/download/2/d/9/2d9c8902-3fcd-48a6-a22a-432b08bed61e/ADK/adksetup.exe"
-        $this.wingetExePath     = (Join-Path -Path $Env:LOCALAPPDATA -ChildItem "Microsoft\WindowsApps\winget.exe")
+        $this.wingetExePath     = (Join-Path -Path $Env:LOCALAPPDATA -ChildPath "Microsoft\WindowsApps\winget.exe")
         # Populate the ozoADLabISOs list
         $this.ozoADLabISOs.Add([PSCustomObject]@{Name="almalinux-9.5-x86_64-minimal.iso";Uri="https://repo.almalinux.org/almalinux/9.5/isos/x86_64/AlmaLinux-9.5-x86_64-minimal.iso"})
         $this.ozoADLabISOs.Add([PSCustomObject]@{Name="microsoft-windows-11-enterprise-evaluation.iso";Uri="https://software-static.download.prss.microsoft.com/dbazure/888969d5-f34g-4e03-ac9d-1f9786c66749/26100.1742.240906-0331.ge_release_svc_refresh_CLIENTENTERPRISEEVAL_OEMRET_x64FRE_en-us.iso"})
@@ -90,25 +92,25 @@ Class ADLIP {
         $this.ozoLogger.Write("Installing Hyper-V features.","Information")
         If ($this.InstallHyperV() -eq $true) {
             # Hyper-V features are installed; determine if a reboot is not required
-            $this.ozoLogger.Write("Hyper-V feature is installed. Determining if a restart is required.","Information")
+            $this.ozoLogger.Write("Determining if a restart is required.","Information")
             If ($this.RestartRequired() -eq $false) {
                 # Restart is not required; add the local user to the Hyper-V Administrators group
-                $this.ozoLogger.Write("A restart is not required. Adding user to the local Hyper-V Administrators group.","Information")
+                $this.ozoLogger.Write("Adding user to the local Hyper-V Administrators group.","Information")
                 If ($this.ManageLocalHyperVAdministratorsGroup() -eq $true) {
                     # Local user is added to the local Hyper-V Administrators group; create the VM switches
-                    $this.ozoLogger.Write("User is in the local Hyper-V Administrators group. Creating the Hyper-V VMSwitches","Information")
+                    $this.ozoLogger.Write("Creating the Hyper-V VMSwitches.","Information")
                     If ($this.CreateVMSwitches() -eq $true) {
                         # VM switches are created; installed the Microsoft SDK
-                        $this.ozoLogger.Write("Created the Hyper-V VMSwitches. Installing the Microsoft ADK Deployment Tools.","Information")
+                        $this.ozoLogger.Write("Installing the Microsoft ADK (Deployment Tools).","Information")
                         If ($this.InstallMicrosoftADK() -eq $true) {
                             # Microsoft SDK is installed; install Git for Windows
-                            $this.ozoLogger.Write("The Microsoft ADK Deployment Tools are installed. Downloading and extracting the latest release of the OZO AD Lab resources.","Information")
+                            $this.ozoLogger.Write("Downloading and extracting the latest release of the OZO AD Lab resources.","Information")
                             If ($this.GetADLabResources() -eq $true) {
                                 # Got AD Lab resources; download the ISOs
-                                $this.ozoLogger.Write("Downloaded and extracted the OZO AD Lab resources. Downloading the source ISOs (this could take some time).","Information")
+                                $this.ozoLogger.Write("Downloading the source ISOs (this could take some time).","Information")
                                 If ($this.DownloadISOs() -eq $true) {
                                     # ISOs are downloaded; report all prerequisites satisfied
-                                    $this.ozoLogger.Write("Downloaded all ISOs. All prerequistes are satisified. Please see https://onezeroone.dev/active-directory-lab-customize-the-windows-installer-isos for the next steps.","Information")
+                                    $this.ozoLogger.Write("All prerequistes are satisified. Please see https://onezeroone.dev/active-directory-lab-customize-the-windows-installer-isos for the next steps.","Information")
                                 } Else {
                                     # Download error
                                     $this.ozoLogger.Write("Error downloading ISOs. Please manually download the required ISOs. Then see https://onezeroone.dev/active-directory-lab-customize-the-windows-installer-isos for the next steps.","Error")
@@ -166,9 +168,9 @@ Class ADLIP {
             $Return = $false
         }
         # Determine if there is already an "ozo-ad-lab" folder off the root of the SystemDrive
-        If ((Test-Path -Path $this.cloneLocalPath) -eq $true) {
+        If ((Test-Path -Path $this.ozoAdLabPath) -eq $true) {
             # There is already an "ozo-ad-lab" folder
-            $this.ozoLogger.Write(("Found " + $this.cloneLocalPath + ". This directory must be removed before proceeding."),"Error")
+            $this.ozoLogger.Write(("Found " + $this.ozoAdLabPath + ". This directory must be removed before proceeding."),"Error")
             $Return = $false
         }
         # Make sure any previous downloaded + extracted releases of OZO-AD-Lab are wiped
@@ -266,16 +268,23 @@ Class ADLIP {
         [Boolean] $Return = $true
         # Local variables
         [String] $oscdimgExePath = (Join-Path -Path ${Env:ProgramFiles(x86)} -ChildPath "Windows Kits\10\Assessment and Deployment Kit\Deployment Tools\amd64\Oscdimg\oscdimg.exe")
+        [String] $simExePath     = (Join-Path -Path ${Env:ProgramFiles(x86)} -ChildPath "Windows Kits\10\Assessment and Deployment Kit\Deployment Tools\WSIM\x86\imgmgr.exe")
         # Determine if oscdimg.exe is note present
-        If ((Test-Path -Path $oscdimgExePath) -eq $false) {
-            # Did not find oscdimg.exe; report
-            $this.ozoLogger.Write("Missing oscdimg.exe. Attempting to download and install the Microsoft ADK.","Warning")
-            # Try to download and install
+        If ((Test-Path -Path $oscdimgExePath) -eq $false -Or (Test-Path $simExePath) -eq $false) {
+            # Did not find oscdimg.exe; try to download and install
             Try {
-                Invoke-WebRequest -Uri $this.winAdkFileUri -OutFile (Join-Path -Path $this.downloadsDir -Childpath $this.winAdkFileName) -ErrorAction Stop
-                Invoke-Command -FilePath $this.winAdkFileName -ArgumentList "/quiet /norestart /features OptionId.DeploymentTools" -ErrorAction Stop
-                # Success
-                Remove-Item -Force -Path $this.winAdkFileName
+                Invoke-WebRequest -Uri $this.winAdkFileUri -OutFile $this.winAdkPath -ErrorAction Stop
+                # Success; try to install
+                Try {
+                    Invoke-Command -ScriptBlock { & $this.winAdkPath /quiet /norestart /features OptionId.DeploymentTools } -ErrorAction Stop | Out-Null
+                    # Success; sleep until the installation is complete
+                    Do {
+                        Start-Sleep -Seconds 1
+                    } Until ((Test-Path -Path $oscdimgExePath) -eq $true -And (Test-Path $simExePath) -eq $true)
+                } Catch {
+                    # Failure
+                    $Return = $false
+                }
             } Catch {
                 # Failure; report
                 $Return = $false
@@ -293,6 +302,8 @@ Class ADLIP {
             Invoke-WebRequest -Uri (Invoke-WebRequest -Uri $this.ozoAdLabZipUri -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop).zipball_url -OutFile $this.ozoAdLabZipPath -ErrorAction Stop
             # Success; expand the archive
             Expand-Archive -Path $this.ozoAdLabZipPath -DestinationPath $Env:TEMP -ErrorAction Stop
+            # Remove the archive
+            Remove-Item -Path $this.ozoAdLabZipPath -Force
             # Move the extracted folder to the ozoAdLab
             Move-Item -Path (Get-ChildItem -Path $Env:TEMP -ErrorAction Stop | Where-Object {$_.Name -Like $this.ozoAdLabDirLike} | Select-Object -First 1).FullName -Destination $this.ozoAdLabPath
             # Create required (empty) Mount subdirectory
