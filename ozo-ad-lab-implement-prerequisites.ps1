@@ -66,7 +66,7 @@ Class ADLIP {
         $this.winAdkFileUri     = "https://download.microsoft.com/download/2/d/9/2d9c8902-3fcd-48a6-a22a-432b08bed61e/ADK/adksetup.exe"
         $this.wingetExePath     = (Join-Path -Path $Env:LOCALAPPDATA -ChildPath "Microsoft\WindowsApps\winget.exe")
         # Populate the ozoADLabISOs list
-        $this.ozoADLabISOs.Add([PSCustomObject]@{Name="almalinux-9.5-x86_64-minimal.iso";Uri="https://repo.almalinux.org/almalinux/9.5/isos/x86_64/AlmaLinux-9.5-x86_64-minimal.iso"})
+        $this.ozoADLabISOs.Add([PSCustomObject]@{Name="almalinux-boot.iso";Uri="https://repo.almalinux.org/almalinux/9.5/isos/x86_64/AlmaLinux-9.5-x86_64-boot.iso"})
         $this.ozoADLabISOs.Add([PSCustomObject]@{Name="microsoft-windows-11-enterprise-evaluation.iso";Uri="https://software-static.download.prss.microsoft.com/dbazure/888969d5-f34g-4e03-ac9d-1f9786c66749/26100.1742.240906-0331.ge_release_svc_refresh_CLIENTENTERPRISEEVAL_OEMRET_x64FRE_en-us.iso"})
         $this.ozoADLabISOs.Add([PSCustomObject]@{Name="microsoft-windows-11-laof.iso";Uri="https://software-static.download.prss.microsoft.com/dbazure/888969d5-f34g-4e03-ac9d-1f9786c66749/26100.1.240331-1435.ge_release_amd64fre_CLIENT_LOF_PACKAGES_OEM.iso"})
         $this.ozoADLabISOs.Add([PSCustomObject]@{Name="microsoft-windows-server-2022-evaluation.iso";Uri="https://software-static.download.prss.microsoft.com/sg/download/888969d5-f34g-4e03-ac9d-1f9786c66749/SERVER_EVAL_x64FRE_en-us.iso"})
@@ -91,54 +91,60 @@ Class ADLIP {
         # Environment validates; install Hyper-V features
         $this.ozoLogger.Write("Installing Hyper-V features.","Information")
         If ($this.InstallHyperV() -eq $true) {
-            # Hyper-V features are installed; determine if a reboot is not required
-            $this.ozoLogger.Write("Determining if a restart is required.","Information")
-            If ($this.RestartRequired() -eq $false) {
-                # Restart is not required; add the local user to the Hyper-V Administrators group
-                $this.ozoLogger.Write("Adding user to the local Hyper-V Administrators group.","Information")
-                If ($this.ManageLocalHyperVAdministratorsGroup() -eq $true) {
-                    # Local user is added to the local Hyper-V Administrators group; create the VM switches
-                    $this.ozoLogger.Write("Creating the Hyper-V VMSwitches.","Information")
-                    If ($this.CreateVMSwitches() -eq $true) {
-                        # VM switches are created; installed the Microsoft SDK
-                        $this.ozoLogger.Write("Installing the Microsoft ADK (Deployment Tools).","Information")
-                        If ($this.InstallMicrosoftADK() -eq $true) {
-                            # Microsoft SDK is installed; install Git for Windows
-                            $this.ozoLogger.Write("Downloading and extracting the latest release of the OZO AD Lab resources.","Information")
-                            If ($this.GetADLabResources() -eq $true) {
-                                # Got AD Lab resources; download the ISOs
-                                $this.ozoLogger.Write("Downloading the source ISOs (this could take some time).","Information")
-                                If ($this.DownloadISOs() -eq $true) {
-                                    # ISOs are downloaded; report all prerequisites satisfied
-                                    $this.ozoLogger.Write("All prerequistes are satisified. Please see https://onezeroone.dev/active-directory-lab-customize-the-windows-installer-isos for the next steps.","Information")
+            # Hyper-V features are installed; install the Debian WSL distribution
+            If ($this.InstallWSLDebian() -eq $true) {
+                # WSL Debian distribution is installed; determine if a reboot is not required
+                $this.ozoLogger.Write("Determining if a restart is required.","Information")
+                If ($this.RestartRequired() -eq $false) {
+                    # Restart is not required; add the local user to the Hyper-V Administrators group
+                    $this.ozoLogger.Write("Adding user to the local Hyper-V Administrators group.","Information")
+                    If ($this.ManageLocalHyperVAdministratorsGroup() -eq $true) {
+                        # Local user is added to the local Hyper-V Administrators group; create the VM switches
+                        $this.ozoLogger.Write("Creating the Hyper-V VMSwitches.","Information")
+                        If ($this.CreateVMSwitches() -eq $true) {
+                            # VM switches are created; installed the Microsoft SDK
+                            $this.ozoLogger.Write("Installing the Microsoft ADK (Deployment Tools).","Information")
+                            If ($this.InstallMicrosoftADK() -eq $true) {
+                                # Microsoft SDK is installed; install Git for Windows
+                                $this.ozoLogger.Write("Downloading and extracting the latest release of the OZO AD Lab resources.","Information")
+                                If ($this.GetADLabResources() -eq $true) {
+                                    # Got AD Lab resources; download the ISOs
+                                    $this.ozoLogger.Write("Downloading the source ISOs (this could take some time).","Information")
+                                    If ($this.DownloadISOs() -eq $true) {
+                                        # ISOs are downloaded; report all prerequisites satisfied
+                                        $this.ozoLogger.Write("All prerequistes are satisified. Please see https://onezeroone.dev/active-directory-lab-customize-the-windows-installer-isos for the next steps.","Information")
+                                    } Else {
+                                        # Download error
+                                        $this.ozoLogger.Write("Error downloading ISOs. Please manually download the required ISOs. Then see https://onezeroone.dev/active-directory-lab-customize-the-windows-installer-isos for the next steps.","Error")
+                                    }
                                 } Else {
-                                    # Download error
-                                    $this.ozoLogger.Write("Error downloading ISOs. Please manually download the required ISOs. Then see https://onezeroone.dev/active-directory-lab-customize-the-windows-installer-isos for the next steps.","Error")
+                                    # Unable to get AD Lab Resources
+                                    $this.ozoLogger.Write("Error downloading and extracting the latest OZO AD Lab resources. Please manually download and extract the latest release and run this script again to continue. See https://onezeroone.dev/active-directory-lab-prerequisites for more information.","Error")
                                 }
                             } Else {
-                                # Unable to get AD Lab Resources
-                                $this.ozoLogger.Write("Error downloading and extracting the latest OZO AD Lab resources. Please manually download and extract the latest release and run this script again to continue. See https://onezeroone.dev/active-directory-lab-prerequisites for more information.","Error")
+                                # Microsoft SDK installation error
+                                $this.ozoLogger.Write("Error attempting to download and install the Microsoft ADK. Please manually download and install and then run this script again to continue. See https://onezeroone.dev/active-directory-lab-prerequisites for more information.","Error")
                             }
                         } Else {
-                            # Microsoft SDK installation error
-                            $this.ozoLogger.Write("Error attempting to download and install the Microsoft ADK. Please manually download and install and then run this script again to continue. See https://onezeroone.dev/active-directory-lab-prerequisites for more information.","Error")
+                            # VMSwitch creation error
+                            $this.ozoLogger.Write("Error creating the VM switches. Please manually create these switches then run this script again to continue. See https://onezeroone.dev/active-directory-lab-prerequisites for more information.","Error")
                         }
                     } Else {
-                        # VMSwitch creation error
-                        $this.ozoLogger.Write("Error creating the VM switches. Please manually create these switches then run this script again to continue. See https://onezeroone.dev/active-directory-lab-prerequisites for more information.","Error")
+                        # Error adding user to local Hyper-V Administrators group
+                        $this.ozoLogger.Write(("Failure adding user " + $this.currentUser + " to the " + $this.localGroup + " group. Please manually add this user to this group then run this script again to continue. See https://onezeroone.dev/active-directory-lab-prerequisites for more information."),"Error")
                     }
                 } Else {
-                    # Error adding user to local Hyper-V Administrators group
-                    $this.ozoLogger.Write(("Failure adding user " + $this.currentUser + " to the " + $this.localGroup + " group. Please manually add this user to this group then run this script again to continue. See https://onezeroone.dev/active-directory-lab-prerequisites for more information."),"Error")
+                    # Restart is required
+                    $this.ozoLogger.Write("Please restart to complete the feature installation and then run this script again to continue.","Warning")
+                    # Get restart decision
+                    If ((Get-OZOYesNo) -eq "y") {
+                        # User elects to restart
+                        Restart-Computer
+                    }
                 }
             } Else {
-                # Restart is required
-                $this.ozoLogger.Write("Please restart to complete the feature installation and then run this script again to continue.","Warning")
-                # Get restart decision
-                If ((Get-OZOYesNo) -eq "y") {
-                    # User elects to restart
-                    Restart-Computer
-                }
+                # Error installing WSL Debian
+                $this.ozoLogger.Write(("Error installing the WSD Debian distribution. Please manually install this distribution and then run this script again to continue."),"Error")    
             }
         } Else {
             # Error installing Hyper-V Feature
@@ -192,6 +198,20 @@ Class ADLIP {
                 # Failure
                 $Return = $false
             }
+        }
+        # Return
+        return $Return
+    }
+    Hidden [Boolean] InstallWSLDebian() {
+        # Control variable
+        [Boolean] $Return = $true
+        # Check if WSL is installed/available and can install Debian
+        Try {
+            & wsl -l --Debian
+            # Success
+        } Catch {
+            # Failure
+            $Return = $false
         }
         # Return
         return $Return
@@ -344,6 +364,14 @@ Function Get-OZOYesNo {
     } Until ($response -eq "y" -Or $response -eq "n")
     # Return response
     return $response
+}
+
+Function New-WSLPathFromWindowsPath {
+    param(
+        [Parameter(Mandatory=$true,HelpMessage="The Windows path to convert")][String]$WindowsPath
+    )
+    # Local variables
+    return ($WindowsPath.Replace("\","/")).Replace($Env:SystemDrive,("/mnt/" + ($Env:SystemDrive.Split(":"))[0].ToLower()))
 }
 
 # MAIN
