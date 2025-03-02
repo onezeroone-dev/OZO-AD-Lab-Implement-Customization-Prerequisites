@@ -201,6 +201,7 @@ Class ADLIP {
         # Return
         return $Return
     }
+    # Install WSL debian method
     Hidden [Boolean] InstallWSLDebian() {
         # Control variable
         [Boolean] $Return = $true
