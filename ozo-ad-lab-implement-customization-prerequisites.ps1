@@ -1,7 +1,7 @@
-#Requires -Modules @{ModuleName="OZO";ModuleVersion="1.5.0"},@{ModuleName="OZOLogger";ModuleVersion="1.1.0"} -RunAsAdministrator
+#Requires -Modules @{ModuleName="OZO";ModuleVersion="1.5.1"},@{ModuleName="OZOLogger";ModuleVersion="1.1.0"} -RunAsAdministrator
 
 <#PSScriptInfo
-    .VERSION 1.0.0
+    .VERSION 0.1.0
     .GUID 2a8769c1-6be2-44f3-ae17-47b4138ea2fa
     .AUTHOR Andy Lievertz <alievertz@onezeroone.dev>
     .COMPANYNAME One Zero One
@@ -31,7 +31,6 @@
 Class ADLIP {
     # PROPERTIES: Booleans, Strings
     [Boolean] $Relog             = $true
-    [Boolean] $Restart           = $false
     [String]  $currentUser       = $null
     [String]  $downloadsDir      = $null
     [String]  $featureName       = $null
@@ -223,7 +222,7 @@ Class ADLIP {
         # Determine if feature is present
         If ((Get-WindowsOptionalFeature -Online -FeatureName $this.featureName).RestartRequired -eq "Required") {
             # Restart is required
-            $this.Restart = $true   
+            $this.Return = $true   
         }
         # Return
         return $Return
@@ -265,7 +264,7 @@ Class ADLIP {
         # Determine if the external switch already exists
         If ([Boolean](Get-VMSwitch -Name "AD Lab External") -eq $false) {
             # External switch does not exist; call Get-NetAdapter to display available network connections
-            Get-NetAdapter
+            Write-Host (Get-NetAdapter)
             # Prompt the user for the name of the external network connection until they correctly identify an adapter
             Do {
                 $externalAdapter = (Read-Host "Above is the output of the Get-NetAdapter command. Type the Name of the network adapter that corresponds with your external network (Internet) connection")
