@@ -75,8 +75,9 @@ Class ADLIP {
         $this.ozoLogger.Write("Process starting.","Information")
         # Call ValidateEnvironment to determine if we can proceed
         If ($this.ValidateEnvironment() -eq $true) {
-            # Environment validates; report and call ProcessPrerequisites to ...process the prerequisites
+            # Environment validates; report
             $this.ozoLogger.Write("Environment validates.","Information")
+            # Call ProcessPrerequisites to ...process the prerequisites
             $this.ProcessPrerequisites()
         } Else {
             # Environment did not validate
@@ -114,23 +115,23 @@ Class ADLIP {
                                         $this.ozoLogger.Write("All prerequisites are satisfied. Please see https://onezeroone.dev/active-directory-lab-customize-the-windows-installer-isos for the next steps.","Information")
                                     } Else {
                                         # Download error
-                                        $this.ozoLogger.Write("Error downloading ISOs. Please manually download the required ISOs. Then see https://onezeroone.dev/active-directory-lab-customize-the-windows-installer-isos for the next steps.","Error")
+                                        $this.ozoLogger.Write("Error downloading ISOs. Please manually download the required ISOs. See https://onezeroone.dev/active-directory-lab-part-ii-customization-prerequisites/ for more information.","Error")
                                     }
                                 } Else {
                                     # Unable to get AD Lab Resources
-                                    $this.ozoLogger.Write("Error downloading and extracting the latest OZO AD Lab resources. Please manually download and extract the latest release and run this script again to continue. See https://onezeroone.dev/active-directory-lab-prerequisites for more information.","Error")
+                                    $this.ozoLogger.Write("Error downloading and extracting the latest OZO AD Lab resources. Please manually download and extract the latest release and run this script again to continue. See https://onezeroone.dev/active-directory-lab-part-ii-customization-prerequisites/ for more information.","Error")
                                 }
                             } Else {
                                 # Microsoft SDK installation error
-                                $this.ozoLogger.Write("Error attempting to download and install the Microsoft ADK. Please manually download and install and then run this script again to continue. See https://onezeroone.dev/active-directory-lab-prerequisites for more information.","Error")
+                                $this.ozoLogger.Write("Error attempting to download and install the Microsoft ADK. Please manually download and install and then run this script again to continue. See https://onezeroone.dev/active-directory-lab-part-ii-customization-prerequisites/ for more information.","Error")
                             }
                         } Else {
                             # VMSwitch creation error
-                            $this.ozoLogger.Write("Error creating the VM switches. Please manually create these switches then run this script again to continue. See https://onezeroone.dev/active-directory-lab-prerequisites for more information.","Error")
+                            $this.ozoLogger.Write("Error creating the VM switches. Please manually create these switches then run this script again to continue. See https://onezeroone.dev/active-directory-lab-part-ii-customization-prerequisites/ for more information.","Error")
                         }
                     } Else {
                         # Error adding user to local Hyper-V Administrators group
-                        $this.ozoLogger.Write(("Failure adding user " + $this.currentUser + " to the " + $this.localGroup + " group. Please manually add this user to this group then run this script again to continue. See https://onezeroone.dev/active-directory-lab-prerequisites for more information."),"Error")
+                        $this.ozoLogger.Write(("Failure adding user " + $this.currentUser + " to the " + $this.localGroup + " group. Please manually add this user to this group then run this script again to continue. See https://onezeroone.dev/active-directory-lab-part-ii-customization-prerequisites/ for more information."),"Error")
                     }
                 } Else {
                     # Restart is required
@@ -143,11 +144,11 @@ Class ADLIP {
                 }
             } Else {
                 # Error installing WSL Debian
-                $this.ozoLogger.Write(("Error installing the WSD Debian distribution. Please manually install this distribution and then run this script again to continue."),"Error")    
+                $this.ozoLogger.Write(("Error installing the WSD Debian distribution. Please manually install this distribution and then run this script again to continue. See https://onezeroone.dev/active-directory-lab-part-ii-customization-prerequisites/ for more information."),"Error")    
             }
         } Else {
             # Error installing Hyper-V Feature
-            $this.ozoLogger.Write(("Error installing the " + $this.featureName + " feature. Please manually install this feature and then run this script again to continue."),"Error")
+            $this.ozoLogger.Write(("Error installing the " + $this.featureName + " feature. Please manually install this feature and then run this script again to continue. See https://onezeroone.dev/active-directory-lab-part-ii-customization-prerequisites/ for more information."),"Error")
         }
     }
     # Environment validation method
