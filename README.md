@@ -1,7 +1,7 @@
 # OZO AD Lab Implement Customization Prerequisites
 
 ## Description
-This script automates [part](https://onezeroone.dev/active-directory-lab-part-ii-customization-prerequisites/) of a One Zero One [series](https://onezeroone.dev/active-directory-lab-introduction) illustrating how to automate the process of deploying an AD Lab.
+This script automates [part](https://onezeroone.dev/active-directory-lab-part-ii-customization-prerequisites/) of a One Zero One [series](https://onezeroone.dev/active-directory-lab-part-i-introduction/) illustrating how to automate the process of deploying an AD Lab.
 
 It is an interactive script that implements the customization prerequisites of the One Zero One AD Lab. It has no parameters.
 
