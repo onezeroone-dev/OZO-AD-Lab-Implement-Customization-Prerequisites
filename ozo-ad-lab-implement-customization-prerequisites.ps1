@@ -7,13 +7,13 @@
     .COMPANYNAME One Zero One
     .COPYRIGHT This script is released under the terms of the GNU General Public License ("GPL") version 2.0.
     .TAGS
-    .LICENSEURI https://github.com/onezeroone-dev/OZO-AD-Lab-Implement-Prerequisites/blob/main/LICENSE
-    .PROJECTURI https://github.com/onezeroone-dev/OZO-AD-Lab-Implement-Prerequisites
+    .LICENSEURI https://github.com/onezeroone-dev/OZO-AD-Lab-Implement-Customization-Prerequisites/blob/main/LICENSE
+    .PROJECTURI https://github.com/onezeroone-dev/OZO-AD-Lab-Implement-Customization-Prerequisites
     .ICONURI
     .EXTERNALMODULEDEPENDENCIES 
     .REQUIREDSCRIPTS
     .EXTERNALSCRIPTDEPENDENCIES
-    .RELEASENOTES https://github.com/onezeroone-dev/OZO-AD-Lab-Implement-Prerequisites/blob/main/CHANGELOG.md
+    .RELEASENOTES https://github.com/onezeroone-dev/OZO-AD-Lab-Implement-Customization-Prerequisites/blob/main/CHANGELOG.md
     .PRIVATEDATA
 #>
 
@@ -21,11 +21,11 @@
     .SYNOPSIS
     See description.
     .DESCRIPTION 
-    Implements the prerequisites for the One Zero One AD Lab.
+    Implements the customization prerequisites for the One Zero One AD Lab.
     .EXAMPLE
-    ozo-ad-lab-implement-prerequisites
+    ozo-ad-lab-implement-customization-prerequisites
     .LINK
-    https://github.com/onezeroone-dev/OZO-AD-Lab-Implement-Prerequisites/blob/main/README.md
+    https://github.com/onezeroone-dev/OZO-AD-Lab-Implement-Customization-Prerequisites/blob/main/README.md
 #>
 
 Class ADLIP {
