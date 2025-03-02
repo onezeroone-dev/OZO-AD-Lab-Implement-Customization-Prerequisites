@@ -206,9 +206,9 @@ Class ADLIP {
     Hidden [Boolean] InstallWSLDebian() {
         # Control variable
         [Boolean] $Return = $true
-        # Check if WSL is installed/available and can install Debian
+        # Try to install WSL Debian
         Try {
-            & wsl -l --Debian
+            & wsl --install --distribution Debian
             # Success
         } Catch {
             # Failure
