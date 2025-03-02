@@ -111,7 +111,7 @@ Class ADLIP {
                                     $this.ozoLogger.Write("Downloading the source ISOs (this could take some time).","Information")
                                     If ($this.DownloadISOs() -eq $true) {
                                         # ISOs are downloaded; report all prerequisites satisfied
-                                        $this.ozoLogger.Write("All prerequistes are satisified. Please see https://onezeroone.dev/active-directory-lab-customize-the-windows-installer-isos for the next steps.","Information")
+                                        $this.ozoLogger.Write("All prerequisites are satisfied. Please see https://onezeroone.dev/active-directory-lab-customize-the-windows-installer-isos for the next steps.","Information")
                                     } Else {
                                         # Download error
                                         $this.ozoLogger.Write("Error downloading ISOs. Please manually download the required ISOs. Then see https://onezeroone.dev/active-directory-lab-customize-the-windows-installer-isos for the next steps.","Error")
@@ -363,14 +363,6 @@ Function Get-OZOYesNo {
     } Until ($response -eq "y" -Or $response -eq "n")
     # Return response
     return $response
-}
-
-Function New-WSLPathFromWindowsPath {
-    param(
-        [Parameter(Mandatory=$true,HelpMessage="The Windows path to convert")][String]$WindowsPath
-    )
-    # Local variables
-    return ($WindowsPath.Replace("\","/")).Replace($Env:SystemDrive,("/mnt/" + ($Env:SystemDrive.Split(":"))[0].ToLower()))
 }
 
 # MAIN
