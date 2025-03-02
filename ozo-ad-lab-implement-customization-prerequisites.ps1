@@ -290,7 +290,7 @@ Class ADLIP {
         # Local variables
         [String] $oscdimgExePath = (Join-Path -Path ${Env:ProgramFiles(x86)} -ChildPath "Windows Kits\10\Assessment and Deployment Kit\Deployment Tools\amd64\Oscdimg\oscdimg.exe")
         [String] $simExePath     = (Join-Path -Path ${Env:ProgramFiles(x86)} -ChildPath "Windows Kits\10\Assessment and Deployment Kit\Deployment Tools\WSIM\x86\imgmgr.exe")
-        # Determine if oscdimg.exe is note present
+        # Determine if oscdimg.exe is not present
         If ((Test-Path -Path $oscdimgExePath) -eq $false -Or (Test-Path $simExePath) -eq $false) {
             # Did not find oscdimg.exe; try to download and install
             Try {
