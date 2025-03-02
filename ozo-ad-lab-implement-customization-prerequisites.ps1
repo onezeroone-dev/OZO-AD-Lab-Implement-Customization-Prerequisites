@@ -206,13 +206,16 @@ Class ADLIP {
     Hidden [Boolean] InstallWSLDebian() {
         # Control variable
         [Boolean] $Return = $true
-        # Try to install WSL Debian
-        Try {
-            & wsl --install --distribution Debian
-            # Success
-        } Catch {
-            # Failure
-            $Return = $false
+        # Determine if WSL Debian is not installed
+        If ([Boolean](wsl -l | Where-Object {$_.Replace("`0","") -Match '^Debian'}) -eq $false) {
+            # Try to install WSL Debian
+            Try {
+                & wsl --install --distribution Debian
+                # Success
+            } Catch {
+                # Failure
+                $Return = $false
+            }
         }
         # Return
         return $Return
