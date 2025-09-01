@@ -65,10 +65,10 @@ Class ADLIP {
         $this.winAdkFileUri     = "https://download.microsoft.com/download/2/d/9/2d9c8902-3fcd-48a6-a22a-432b08bed61e/ADK/adksetup.exe"
         $this.wingetExePath     = (Join-Path -Path $Env:LOCALAPPDATA -ChildPath "Microsoft\WindowsApps\winget.exe")
         # Populate the ozoADLabISOs list
-        $this.ozoADLabISOs.Add([PSCustomObject]@{Name="almalinux-boot.iso";Uri="https://repo.almalinux.org/almalinux/9.5/isos/x86_64/AlmaLinux-9.5-x86_64-boot.iso"})
+        $this.ozoADLabISOs.Add([PSCustomObject]@{Name="almalinux-boot.iso";Uri="https://repo.almalinux.org/almalinux/10/isos/x86_64/AlmaLinux-10.0-x86_64-boot.iso"})
         $this.ozoADLabISOs.Add([PSCustomObject]@{Name="microsoft-windows-11-enterprise-evaluation.iso";Uri="https://software-static.download.prss.microsoft.com/dbazure/888969d5-f34g-4e03-ac9d-1f9786c66749/26100.1742.240906-0331.ge_release_svc_refresh_CLIENTENTERPRISEEVAL_OEMRET_x64FRE_en-us.iso"})
         $this.ozoADLabISOs.Add([PSCustomObject]@{Name="microsoft-windows-11-laof.iso";Uri="https://software-static.download.prss.microsoft.com/dbazure/888969d5-f34g-4e03-ac9d-1f9786c66749/26100.1.240331-1435.ge_release_amd64fre_CLIENT_LOF_PACKAGES_OEM.iso"})
-        $this.ozoADLabISOs.Add([PSCustomObject]@{Name="microsoft-windows-server-2022-evaluation.iso";Uri="https://software-static.download.prss.microsoft.com/sg/download/888969d5-f34g-4e03-ac9d-1f9786c66749/SERVER_EVAL_x64FRE_en-us.iso"})
+        $this.ozoADLabISOs.Add([PSCustomObject]@{Name="microsoft-windows-server-2025-evaluation.iso";Uri="https://software-static.download.prss.microsoft.com/dbazure/888969d5-f34g-4e03-ac9d-1f9786c66749/26100.1742.240906-0331.ge_release_svc_refresh_SERVER_EVAL_x64FRE_en-us.iso"})
         # Create a logger object
         $this.ozoLogger = (New-OZOLogger)
         # Declare ourselves to the world
@@ -325,11 +325,11 @@ Class ADLIP {
         Try {
             Invoke-WebRequest -Uri (Invoke-WebRequest -Uri $this.ozoAdLabZipUri -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop).zipball_url -OutFile $this.ozoAdLabZipPath -ErrorAction Stop
             # Success; expand the archive
-            Expand-Archive -Path $this.ozoAdLabZipPath -DestinationPath $Env:TEMP -ErrorAction Stop
+            Expand-Archive -Force -Path $this.ozoAdLabZipPath -DestinationPath $Env:TEMP -ErrorAction Stop
             # Remove the archive
             Remove-Item -Path $this.ozoAdLabZipPath -Force
             # Move the extracted folder to the ozoAdLab
-            Move-Item -Path (Get-ChildItem -Path $Env:TEMP -ErrorAction Stop | Where-Object {$_.Name -Like $this.ozoAdLabDirLike} | Select-Object -First 1).FullName -Destination $this.ozoAdLabPath
+            Move-Item -Force -Path (Get-ChildItem -Path $Env:TEMP -ErrorAction Stop | Where-Object {$_.Name -Like $this.ozoAdLabDirLike} | Select-Object -First 1).FullName -Destination $this.ozoAdLabPath
             # Create required (empty) Mount subdirectory
             New-Item -ItemType Directory -Path (Join-Path -Path $this.ozoAdLabPath -ChildPath "Mount") -ErrorAction Stop
         } Catch {
@@ -346,13 +346,18 @@ Class ADLIP {
         [Boolean] $Return = $true
         # Iterate through the ISOs
         ForEach ($ozoAdLabIso in $this.ozoADLabISOs) {
-            # Try to get the ISO
-            Try {
-                Invoke-WebRequest -Uri $ozoAdLabIso.Uri -OutFile (Join-Path -Path $this.ozoAdLabPath -ChildPath (Join-Path -Path "ISO" -ChildPath $ozoAdLabIso.Name)) -ErrorAction Stop
-                # Success
-            } Catch {
-                # Failure
-                $Return = $false
+            # Generate the ISO path
+            [String] $isoPath = (Join-Path -Path $this.ozoAdLabPath -ChildPath (Join-Path -Path "ISO" -ChildPath $ozoAdLabIso.Name))
+            # Determine if the file does not already exist
+            If ((Test-Path -Path $isoPath) -eq $false) {
+                # The ISO does not already exist; try to download
+                Try {
+                    Invoke-WebRequest -Uri $ozoAdLabIso.Uri -OutFile $isoPath -ErrorAction Stop
+                    # Success
+                } Catch {
+                    # Failure
+                    $Return = $false
+                }
             }
         }
         # Return
