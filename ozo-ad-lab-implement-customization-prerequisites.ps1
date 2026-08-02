@@ -1,7 +1,7 @@
 #Requires -Modules @{ModuleName="OZO";ModuleVersion="1.5.1"},@{ModuleName="OZOLogger";ModuleVersion="1.1.0"} -RunAsAdministrator
 
 <#PSScriptInfo
-    .VERSION 0.1.0
+    .VERSION 0.1.1
     .GUID 2a8769c1-6be2-44f3-ae17-47b4138ea2fa
     .AUTHOR Andy Lievertz <alievertz@onezeroone.dev>
     .COMPANYNAME One Zero One
@@ -28,29 +28,30 @@
     https://github.com/onezeroone-dev/OZO-AD-Lab-Implement-Customization-Prerequisites/blob/main/README.md
 #>
 
-Class ADLIP {
-    # PROPERTIES: Booleans, Strings
-    [Boolean] $Relog             = $true
-    [String]  $currentUser       = $null
-    [String]  $downloadsDir      = $null
-    [String]  $featureName       = $null
-    [String]  $gitExePath        = $null
-    [String]  $localGroup        = $null
-    [String]  $ozoAdLabDirLike   = $null
-    [String]  $ozoAdLabPath      = $null
-    [String]  $ozoAdLabZipPath   = $null
-    [String]  $ozoAdLabZipUri    = $null
-    [String]  $winAdkFileName    = $null
-    [String]  $winAdkPath        = $null
-    [String]  $winAdkFileUri     = $null
-    [String]  $wingetExePath     = $null
+Class ADLICP {
+    # PROPERTIES: Booleans
+    [Boolean] $Relog = $true
+    # PROPERTIES: Strings
+    [String]  $currentUser     = $null
+    [String]  $downloadsDir    = $null
+    [String]  $featureName     = $null
+    [String]  $gitExePath      = $null
+    [String]  $localGroup      = $null
+    [String]  $ozoAdLabDirLike = $null
+    [String]  $ozoAdLabPath    = $null
+    [String]  $ozoAdLabZipPath = $null
+    [String]  $ozoAdLabZipUri  = $null
+    [String]  $winAdkFileName  = $null
+    [String]  $winAdkPath      = $null
+    [String]  $winAdkFileUri   = $null
+    [String]  $wingetExePath   = $null
     # PROPERTIES: PSCustomObjects
     [PSCustomObject] $ozoLogger = @()
     # PROPERTIES: Lists
     [System.Collections.Generic.List[PSCustomObject]] $ozoADLabISOs = @()
     # METHODS
     # Constructor method
-    ADLIP() {
+    ADLICP() {
         # Set properties
         $this.currentUser       = ([System.Security.Principal.WindowsIdentity]::GetCurrent().Name)
         $this.downloadsDir      = (Join-Path -Path $Env:USERPROFILE -ChildPath "Downloads")
@@ -65,7 +66,7 @@ Class ADLIP {
         $this.winAdkFileUri     = "https://download.microsoft.com/download/2/d/9/2d9c8902-3fcd-48a6-a22a-432b08bed61e/ADK/adksetup.exe"
         $this.wingetExePath     = (Join-Path -Path $Env:LOCALAPPDATA -ChildPath "Microsoft\WindowsApps\winget.exe")
         # Populate the ozoADLabISOs list
-        $this.ozoADLabISOs.Add([PSCustomObject]@{Name="almalinux-boot.iso";Uri="https://repo.almalinux.org/almalinux/10/isos/x86_64/AlmaLinux-10.0-x86_64-boot.iso"})
+        $this.ozoADLabISOs.Add([PSCustomObject]@{Name="almalinux-boot.iso";Uri="https://repo.almalinux.org/almalinux/10/isos/x86_64/AlmaLinux-10-latest-x86_64-boot.iso"})
         $this.ozoADLabISOs.Add([PSCustomObject]@{Name="microsoft-windows-11-enterprise-evaluation.iso";Uri="https://software-static.download.prss.microsoft.com/dbazure/888969d5-f34g-4e03-ac9d-1f9786c66749/26100.1742.240906-0331.ge_release_svc_refresh_CLIENTENTERPRISEEVAL_OEMRET_x64FRE_en-us.iso"})
         $this.ozoADLabISOs.Add([PSCustomObject]@{Name="microsoft-windows-11-laof.iso";Uri="https://software-static.download.prss.microsoft.com/dbazure/888969d5-f34g-4e03-ac9d-1f9786c66749/26100.1.240331-1435.ge_release_amd64fre_CLIENT_LOF_PACKAGES_OEM.iso"})
         $this.ozoADLabISOs.Add([PSCustomObject]@{Name="microsoft-windows-server-2025-evaluation.iso";Uri="https://software-static.download.prss.microsoft.com/dbazure/888969d5-f34g-4e03-ac9d-1f9786c66749/26100.1742.240906-0331.ge_release_svc_refresh_SERVER_EVAL_x64FRE_en-us.iso"})
@@ -127,7 +128,7 @@ Class ADLIP {
                             }
                         } Else {
                             # VMSwitch creation error
-                            $this.ozoLogger.Write("Error creating the VM switches. Please manually create these switches then run this script again to continue. See https://onezeroone.dev/active-directory-lab-part-ii-customization-prerequisites/ for more information.","Error")
+                            $this.ozoLogger.Write("Error creating the VM switches. You may need to log out and back in to refresh your group membership. If that does not help, please manually create these switches. Then run this script again to continue. See https://onezeroone.dev/active-directory-lab-part-ii-customization-prerequisites/ for more information.","Error")
                         }
                     } Else {
                         # Error adding user to local Hyper-V Administrators group
@@ -256,10 +257,10 @@ Class ADLIP {
         [Boolean] $Return          = $true
         [String]  $externalAdapter = $null
         # Determine if the private switch already exists
-        If ([Boolean](Get-VMSwitch -Name "AD Lab Private") -eq $false) {
+        If ([Boolean](Get-VMSwitch -Name "OZO AD Lab Private") -eq $false) {
             # Private switch does not exist; try to create it
             Try {
-                New-VMSwitch -Name "AD Lab Private" -SwitchType Private -ErrorAction Stop
+                New-VMSwitch -Name "OZO AD Lab Private" -SwitchType Private -ErrorAction Stop
                 # Success
             } Catch {
                 # Failure
@@ -267,7 +268,7 @@ Class ADLIP {
             }
         }
         # Determine if the external switch already exists
-        If ([Boolean](Get-VMSwitch -Name "AD Lab External") -eq $false) {
+        If ([Boolean](Get-VMSwitch -Name "OZO AD Lab External") -eq $false) {
             # External switch does not exist; call Get-NetAdapter to display available network connections
             Write-Host (Get-NetAdapter)
             # Prompt the user for the name of the external network connection until they correctly identify an adapter
@@ -276,7 +277,7 @@ Class ADLIP {
             } Until ((Get-NetAdapter).Name -Contains $externalAdapter)
             # Try to create the external switch
             Try {
-                New-VMSwitch -Name "AD Lab External" -NetAdapterName $externalAdapter -ErrorAction Stop
+                New-VMSwitch -Name "OZO AD Lab External" -NetAdapterName $externalAdapter -ErrorAction Stop
                 # Success
             } Catch {
                 # Failure
@@ -376,4 +377,4 @@ Function Get-OZOYesNo {
 }
 
 # MAIN
-[ADLIP]::new() | Out-Null
+[ADLICP]::new() | Out-Null
