@@ -1,7 +1,7 @@
 #Requires -Modules @{ModuleName="OZO";ModuleVersion="1.5.1"},@{ModuleName="OZOLogger";ModuleVersion="1.1.0"} -RunAsAdministrator
 
 <#PSScriptInfo
-    .VERSION 0.1.1
+    .VERSION 1.0.0
     .GUID 2a8769c1-6be2-44f3-ae17-47b4138ea2fa
     .AUTHOR Andy Lievertz <alievertz@onezeroone.dev>
     .COMPANYNAME One Zero One
@@ -270,7 +270,7 @@ Class ADLICP {
         # Determine if the external switch already exists
         If ([Boolean](Get-VMSwitch -Name "OZO AD Lab External") -eq $false) {
             # External switch does not exist; call Get-NetAdapter to display available network connections
-            Write-Host (Get-NetAdapter)
+            Get-NetAdapter | Out-Host
             # Prompt the user for the name of the external network connection until they correctly identify an adapter
             Do {
                 $externalAdapter = (Read-Host "Above is the output of the Get-NetAdapter command. Type the Name of the network adapter that corresponds with your external network (Internet) connection")
@@ -324,7 +324,7 @@ Class ADLICP {
         [Boolean] $Return = $true
         # Try to get the latest zipball
         Try {
-            Invoke-WebRequest -Uri (Invoke-WebRequest -Uri $this.ozoAdLabZipUri -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop).zipball_url -OutFile $this.ozoAdLabZipPath -ErrorAction Stop
+            Invoke-WebRequest -UseBasicParsing -Uri (Invoke-WebRequest -UseBasicParsing -Uri $this.ozoAdLabZipUri -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop).zipball_url -OutFile $this.ozoAdLabZipPath -ErrorAction Stop
             # Success; expand the archive
             Expand-Archive -Force -Path $this.ozoAdLabZipPath -DestinationPath $Env:TEMP -ErrorAction Stop
             # Remove the archive
@@ -334,6 +334,7 @@ Class ADLICP {
             # Create required (empty) Mount subdirectory
             New-Item -ItemType Directory -Path (Join-Path -Path $this.ozoAdLabPath -ChildPath "Mount") -ErrorAction Stop
         } Catch {
+            $this.ozoLogger.Write($_,"Error")
             #Failure
             $Return = $false
         }
