@@ -256,33 +256,39 @@ Class ADLICP {
         # Control variable
         [Boolean] $Return          = $true
         [String]  $externalAdapter = $null
-        # Determine if the private switch already exists
-        If ([Boolean](Get-VMSwitch -Name "OZO AD Lab Private") -eq $false) {
-            # Private switch does not exist; try to create it
-            Try {
-                New-VMSwitch -Name "OZO AD Lab Private" -SwitchType Private -ErrorAction Stop
-                # Success
-            } Catch {
-                # Failure
-                $Return = $false
+        # Determine if the Get-VMSwitch cmdlet is available
+        If ((Get-Command -Name Get-VMSwitch -ErrorAction SilentlyContinue) -eq $true) {
+            # Get-VMSwitch cmdlet is available; determine if the private switch already exists
+            If ([Boolean](Get-VMSwitch -Name "OZO AD Lab Private") -eq $false) {
+                # Private switch does not exist; try to create it
+                Try {
+                    New-VMSwitch -Name "OZO AD Lab Private" -SwitchType Private -ErrorAction Stop
+                    # Success
+                } Catch {
+                    # Failure
+                    $Return = $false
+                }
             }
-        }
-        # Determine if the external switch already exists
-        If ([Boolean](Get-VMSwitch -Name "OZO AD Lab External") -eq $false) {
-            # External switch does not exist; call Get-NetAdapter to display available network connections
-            Get-NetAdapter | Out-Host
-            # Prompt the user for the name of the external network connection until they correctly identify an adapter
-            Do {
-                $externalAdapter = (Read-Host "Above is the output of the Get-NetAdapter command. Type the Name of the network adapter that corresponds with your external network (Internet) connection")
-            } Until ((Get-NetAdapter).Name -Contains $externalAdapter)
-            # Try to create the external switch
-            Try {
-                New-VMSwitch -Name "OZO AD Lab External" -NetAdapterName $externalAdapter -ErrorAction Stop
-                # Success
-            } Catch {
-                # Failure
-                $Return = $false
+            # Determine if the external switch already exists
+            If ([Boolean](Get-VMSwitch -Name "OZO AD Lab External") -eq $false) {
+                # External switch does not exist; call Get-NetAdapter to display available network connections
+                Get-NetAdapter | Out-Host
+                # Prompt the user for the name of the external network connection until they correctly identify an adapter
+                Do {
+                    $externalAdapter = (Read-Host "Above is the output of the Get-NetAdapter command. Type the Name of the network adapter that corresponds with your external network (Internet) connection")
+                } Until ((Get-NetAdapter).Name -Contains $externalAdapter)
+                # Try to create the external switch
+                Try {
+                    New-VMSwitch -Name "OZO AD Lab External" -NetAdapterName $externalAdapter -ErrorAction Stop
+                    # Success
+                } Catch {
+                    # Failure
+                    $Return = $false
+                }
             }
+        } Else {
+            # Get-VMSwitch cmdlet is not available
+            $Return = $false
         }
         # Return
         return $Return
