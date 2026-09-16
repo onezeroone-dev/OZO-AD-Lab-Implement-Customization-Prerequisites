@@ -260,10 +260,11 @@ Class ADLICP {
     # Create VM switches method
     Hidden [Boolean] CreateVMSwitches() {
         # Control variable
-        [Boolean] $Return          = $true
+        [Boolean] $Return = $true
+        # Local variables
         [String]  $externalAdapter = $null
         # Determine if the Get-VMSwitch cmdlet is available
-        If ((Get-Command -Name Get-VMSwitch -ErrorAction SilentlyContinue) -eq $true) {
+        If ([Boolean](Get-Command -Name Get-VMSwitch -ErrorAction SilentlyContinue) -eq $true) {
             # Get-VMSwitch cmdlet is available; determine if the private switch already exists
             If ([Boolean](Get-VMSwitch -Name "OZO AD Lab Private") -eq $false) {
                 # Private switch does not exist; try to create it
@@ -271,6 +272,7 @@ Class ADLICP {
                     New-VMSwitch -Name "OZO AD Lab Private" -SwitchType Private -ErrorAction Stop
                     # Success
                 } Catch {
+                    $this.ozoLogger.Write($_,"Error")
                     # Failure
                     $Return = $false
                 }
