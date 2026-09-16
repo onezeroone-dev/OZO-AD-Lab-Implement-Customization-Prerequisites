@@ -377,8 +377,8 @@ Function Get-OZOYesNo {
     # Prompt the user to restart and return the lowercase of the first letter of their response
     [String]$response = $null
     Do {
-        $response = (Read-Host "(Y/N)")[0].ToLower()
-    } Until ($response -eq "y" -Or $response -eq "n")
+        $response = (Read-Host "(Y/N)")[0]
+    } Until ($response.ToLower() -eq "y" -Or $response.ToLower() -eq "n")
     # Return response
     return $response
 }
