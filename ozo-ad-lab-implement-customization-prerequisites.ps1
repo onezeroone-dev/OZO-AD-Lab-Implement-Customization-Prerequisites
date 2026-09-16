@@ -272,7 +272,6 @@ Class ADLICP {
                     New-VMSwitch -Name "OZO AD Lab Private" -SwitchType Private -ErrorAction Stop
                     # Success
                 } Catch {
-                    $this.ozoLogger.Write($_,"Error")
                     # Failure
                     $Return = $false
                 }
