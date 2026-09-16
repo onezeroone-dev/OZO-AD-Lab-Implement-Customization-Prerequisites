@@ -94,23 +94,29 @@ Class ADLICP {
         If ($this.InstallHyperV() -eq $true) {
             # Hyper-V features are installed; install the Debian WSL distribution
             If ($this.InstallWSLDebian() -eq $true) {
-                # WSL Debian distribution is installed; determine if a reboot is not required
+                # WSL Debian distribution is installed
                 $this.ozoLogger.Write("Determining if a restart is required.","Information")
+                # Determine if a reboot is not required
                 If ($this.RestartRequired() -eq $false) {
-                    # Restart is not required; add the local user to the Hyper-V Administrators group
+                    # Restart is not required
                     $this.ozoLogger.Write("Adding user to the local Hyper-V Administrators group.","Information")
+                    # Determine if the user is added to the local Hyper-V Administrators group
                     If ($this.ManageLocalHyperVAdministratorsGroup() -eq $true) {
-                        # Local user is added to the local Hyper-V Administrators group; create the VM switches
+                        # Local user is added to the local Hyper-V Administrators group
                         $this.ozoLogger.Write("Creating the Hyper-V VMSwitches.","Information")
+                        # Determine if the VM switches are created
                         If ($this.CreateVMSwitches() -eq $true) {
-                            # VM switches are created; installed the Microsoft SDK
+                            # VM switches are created
                             $this.ozoLogger.Write("Installing the Microsoft ADK (Deployment Tools).","Information")
+                            # Determine if the Microsoft ADK is installed
                             If ($this.InstallMicrosoftADK() -eq $true) {
-                                # Microsoft SDK is installed; install Git for Windows
+                                # Microsoft ADK is installed
                                 $this.ozoLogger.Write("Downloading and extracting the latest release of the OZO AD Lab resources.","Information")
+                                # Determine if the OZO AD Lab resources are downloaded and extracted
                                 If ($this.GetADLabResources() -eq $true) {
                                     # Got AD Lab resources; download the ISOs
                                     $this.ozoLogger.Write("Downloading the source ISOs (this could take some time).","Information")
+                                    # Determine if the source ISOs are downloaded
                                     If ($this.DownloadISOs() -eq $true) {
                                         # ISOs are downloaded; report all prerequisites satisfied
                                         $this.ozoLogger.Write("All prerequisites are satisfied. Please see https://onezeroone.dev/active-directory-lab-customize-the-windows-installer-isos for the next steps.","Information")
@@ -226,7 +232,7 @@ Class ADLICP {
         # Control variable
         [Boolean] $Return = $false
         # Determine if feature is present
-        If ((Get-WindowsOptionalFeature -Online -FeatureName $this.featureName).RestartRequired -ne "No") {
+        If ((Get-WindowsOptionalFeature -Online -FeatureName $this.featureName).RestartRequired -eq "Required") {
             # Restart is required
             $Return = $true   
         }
