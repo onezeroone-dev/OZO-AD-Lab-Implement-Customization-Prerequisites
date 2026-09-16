@@ -1,7 +1,7 @@
 #Requires -Modules @{ModuleName="OZO";ModuleVersion="1.5.1"},@{ModuleName="OZOLogger";ModuleVersion="1.1.0"} -RunAsAdministrator
 
 <#PSScriptInfo
-    .VERSION 1.0.0
+    .VERSION 1.0.1
     .GUID 2a8769c1-6be2-44f3-ae17-47b4138ea2fa
     .AUTHOR Andy Lievertz <alievertz@onezeroone.dev>
     .COMPANYNAME One Zero One
