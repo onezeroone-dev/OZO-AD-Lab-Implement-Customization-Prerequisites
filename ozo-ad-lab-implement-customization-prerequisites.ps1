@@ -228,7 +228,7 @@ Class ADLICP {
         # Determine if feature is present
         If ((Get-WindowsOptionalFeature -Online -FeatureName $this.featureName).RestartRequired -ne "No") {
             # Restart is required
-            $this.Return = $true   
+            $Return = $true   
         }
         # Return
         return $Return
