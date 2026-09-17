@@ -1,7 +1,7 @@
 #Requires -Modules @{ModuleName="OZO";ModuleVersion="1.5.1"},@{ModuleName="OZOLogger";ModuleVersion="1.1.0"} -RunAsAdministrator
 
 <#PSScriptInfo
-    .VERSION 1.0.0
+    .VERSION 1.0.1
     .GUID 2a8769c1-6be2-44f3-ae17-47b4138ea2fa
     .AUTHOR Andy Lievertz <alievertz@onezeroone.dev>
     .COMPANYNAME One Zero One
@@ -94,23 +94,29 @@ Class ADLICP {
         If ($this.InstallHyperV() -eq $true) {
             # Hyper-V features are installed; install the Debian WSL distribution
             If ($this.InstallWSLDebian() -eq $true) {
-                # WSL Debian distribution is installed; determine if a reboot is not required
+                # WSL Debian distribution is installed
                 $this.ozoLogger.Write("Determining if a restart is required.","Information")
+                # Determine if a reboot is not required
                 If ($this.RestartRequired() -eq $false) {
-                    # Restart is not required; add the local user to the Hyper-V Administrators group
+                    # Restart is not required
                     $this.ozoLogger.Write("Adding user to the local Hyper-V Administrators group.","Information")
+                    # Determine if the user is added to the local Hyper-V Administrators group
                     If ($this.ManageLocalHyperVAdministratorsGroup() -eq $true) {
-                        # Local user is added to the local Hyper-V Administrators group; create the VM switches
+                        # Local user is added to the local Hyper-V Administrators group
                         $this.ozoLogger.Write("Creating the Hyper-V VMSwitches.","Information")
+                        # Determine if the VM switches are created
                         If ($this.CreateVMSwitches() -eq $true) {
-                            # VM switches are created; installed the Microsoft SDK
+                            # VM switches are created
                             $this.ozoLogger.Write("Installing the Microsoft ADK (Deployment Tools).","Information")
+                            # Determine if the Microsoft ADK is installed
                             If ($this.InstallMicrosoftADK() -eq $true) {
-                                # Microsoft SDK is installed; install Git for Windows
+                                # Microsoft ADK is installed
                                 $this.ozoLogger.Write("Downloading and extracting the latest release of the OZO AD Lab resources.","Information")
+                                # Determine if the OZO AD Lab resources are downloaded and extracted
                                 If ($this.GetADLabResources() -eq $true) {
                                     # Got AD Lab resources; download the ISOs
                                     $this.ozoLogger.Write("Downloading the source ISOs (this could take some time).","Information")
+                                    # Determine if the source ISOs are downloaded
                                     If ($this.DownloadISOs() -eq $true) {
                                         # ISOs are downloaded; report all prerequisites satisfied
                                         $this.ozoLogger.Write("All prerequisites are satisfied. Please see https://onezeroone.dev/active-directory-lab-customize-the-windows-installer-isos for the next steps.","Information")
@@ -228,7 +234,7 @@ Class ADLICP {
         # Determine if feature is present
         If ((Get-WindowsOptionalFeature -Online -FeatureName $this.featureName).RestartRequired -eq "Required") {
             # Restart is required
-            $this.Return = $true   
+            $Return = $true   
         }
         # Return
         return $Return
@@ -254,35 +260,42 @@ Class ADLICP {
     # Create VM switches method
     Hidden [Boolean] CreateVMSwitches() {
         # Control variable
-        [Boolean] $Return          = $true
+        [Boolean] $Return = $true
+        # Local variables
         [String]  $externalAdapter = $null
-        # Determine if the private switch already exists
-        If ([Boolean](Get-VMSwitch -Name "OZO AD Lab Private") -eq $false) {
-            # Private switch does not exist; try to create it
-            Try {
-                New-VMSwitch -Name "OZO AD Lab Private" -SwitchType Private -ErrorAction Stop
-                # Success
-            } Catch {
-                # Failure
-                $Return = $false
+        # Determine if the Get-VMSwitch cmdlet is available
+        If ([Boolean](Get-Command -Name Get-VMSwitch -ErrorAction SilentlyContinue) -eq $true) {
+            # Get-VMSwitch cmdlet is available; determine if the private switch already exists
+            If ([Boolean](Get-VMSwitch -Name "OZO AD Lab Private") -eq $false) {
+                # Private switch does not exist; try to create it
+                Try {
+                    New-VMSwitch -Name "OZO AD Lab Private" -SwitchType Private -ErrorAction Stop
+                    # Success
+                } Catch {
+                    # Failure
+                    $Return = $false
+                }
             }
-        }
-        # Determine if the external switch already exists
-        If ([Boolean](Get-VMSwitch -Name "OZO AD Lab External") -eq $false) {
-            # External switch does not exist; call Get-NetAdapter to display available network connections
-            Get-NetAdapter | Out-Host
-            # Prompt the user for the name of the external network connection until they correctly identify an adapter
-            Do {
-                $externalAdapter = (Read-Host "Above is the output of the Get-NetAdapter command. Type the Name of the network adapter that corresponds with your external network (Internet) connection")
-            } Until ((Get-NetAdapter).Name -Contains $externalAdapter)
-            # Try to create the external switch
-            Try {
-                New-VMSwitch -Name "OZO AD Lab External" -NetAdapterName $externalAdapter -ErrorAction Stop
-                # Success
-            } Catch {
-                # Failure
-                $Return = $false
+            # Determine if the external switch already exists
+            If ([Boolean](Get-VMSwitch -Name "OZO AD Lab External") -eq $false) {
+                # External switch does not exist; call Get-NetAdapter to display available network connections
+                Get-NetAdapter | Out-Host
+                # Prompt the user for the name of the external network connection until they correctly identify an adapter
+                Do {
+                    $externalAdapter = (Read-Host "Above is the output of the Get-NetAdapter command. Type the Name of the network adapter that corresponds with your external network (Internet) connection")
+                } Until ((Get-NetAdapter).Name -Contains $externalAdapter)
+                # Try to create the external switch
+                Try {
+                    New-VMSwitch -Name "OZO AD Lab External" -NetAdapterName $externalAdapter -ErrorAction Stop
+                    # Success
+                } Catch {
+                    # Failure
+                    $Return = $false
+                }
             }
+        } Else {
+            # Get-VMSwitch cmdlet is not available
+            $Return = $false
         }
         # Return
         return $Return
@@ -371,8 +384,8 @@ Function Get-OZOYesNo {
     # Prompt the user to restart and return the lowercase of the first letter of their response
     [String]$response = $null
     Do {
-        $response = (Read-Host "(Y/N)")[0].ToLower()
-    } Until ($response -eq "y" -Or $response -eq "n")
+        $response = (Read-Host "(Y/N)")[0]
+    } Until ($response.ToLower() -eq "y" -Or $response.ToLower() -eq "n")
     # Return response
     return $response
 }
