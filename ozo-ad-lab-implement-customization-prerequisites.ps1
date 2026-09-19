@@ -61,12 +61,12 @@ Class Main {
         $this.ozoLogger = (New-OZOLogger)
         # Call ValidateEnvironment to determine if we can proceed
         If ($this.ValidateEnvironment($OZOADLabDirLike,$OZOADLabPath) -eq $true) {
-            # Determine if the Hyper-V features are not installed
-            If ($this.InstallHyperV($FeatureName) -eq $false) {
-                # Hyper-V features are not installed
+            # Determine if the feature is not installed
+            If ($this.InstallFeature($FeatureName) -eq $false) {
+                # Feature is not installed
                 $this.prerequisitesSatisfied = $false
             } Else {
-                # Hyper-V features are installed; determine if a restart is required
+                # Feature is installed; determine if a restart is required
                 If ($this.RestartRequired($FeatureName) -eq $true) {
                     # Restart is required
                     $this.prerequisitesSatisfied = $false
@@ -122,8 +122,8 @@ Class Main {
         # Return
         return $Return
     }
-    # METHODS: Install Hyper-V method
-    Hidden [Boolean] InstallHyperV($FeatureName) {
+    # METHODS: Install feature method
+    Hidden [Boolean] InstallFeature($FeatureName) {
         # Control variable
         [Boolean] $Return = $true
         # Determine if the feature is present
