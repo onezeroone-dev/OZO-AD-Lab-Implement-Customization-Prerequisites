@@ -1,7 +1,7 @@
 #Requires -Modules @{ModuleName="OZO"; ModuleVersion="1.7.0"},OZOLogger -RunAsAdministrator
 
 <#PSScriptInfo
-    .VERSION 1.0.2
+    .VERSION 1.0.3
     .GUID 2a8769c1-6be2-44f3-ae17-47b4138ea2fa
     .AUTHOR Andy Lievertz <alievertz@onezeroone.dev>
     .COMPANYNAME One Zero One
@@ -81,7 +81,7 @@ Class Main {
             # Determine if the Microsoft ADK is not installed
             If ($this.InstallMicrosoftADK($OscdimgExePath,$SimExePath,$WinAdkFileUri,$WinAdkPath) -eq $false) { $this.prerequisitesSatisfied = $false }
             # Determine if the OZO AD Lab resources are not downloaded and extracted
-            If ($this.GetOZOADLabResources($OZOADLabPath,$OZOADLabDirLike,$OZOADLabZipUri) -eq $false) { $this.prerequisitesSatisfied = $false }
+            If ($this.GetOZOADLabResources($OZOADLabPath,$OZOADLabDirLike,$OZOADLabZipPath,$OZOADLabZipUri) -eq $false) { $this.prerequisitesSatisfied = $false }
             # Determine if the source ISOs are not downloaded
             If ($this.DownloadISOs($OZOADLabISOs,$OZOADLabPath) -eq $false) { $this.prerequisitesSatisfied = $false }
             # Determine if all prerequisites were met
@@ -285,25 +285,25 @@ Class Main {
         return $Return
     }
     # METHODS: Get AD Lab resources method
-    Hidden [Boolean] GetOZOADLabResources($OZOADLabPath,$OZOADLabDirLike,$OZOADLabZipUri) {
+    Hidden [Boolean] GetOZOADLabResources($OZOADLabPath,$OZOADLabDirLike,$OZOADLabZipPath,$OZOADLabZipUri) {
         # Control variable
         [Boolean] $Return = $true
         # Report
         $this.ozoLogger.Write("Downloading and extracting the latest release of the OZO AD Lab resources.","Information")
         # Try to get the latest zipball
         Try {
-            Invoke-WebRequest -UseBasicParsing -Uri (Invoke-WebRequest -UseBasicParsing -Uri $OZOADLabZipUri -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop).zipball_url -OutFile $this.ozoAdLabZipPath -ErrorAction Stop
+            Invoke-WebRequest -UseBasicParsing -Uri (Invoke-WebRequest -UseBasicParsing -Uri $OZOADLabZipUri -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop).zipball_url -OutFile $OZOADLabZipPath -ErrorAction Stop
             # Success; expand the archive
-            Expand-Archive -Force -Path $this.ozoAdLabZipPath -DestinationPath $Env:TEMP -ErrorAction Stop
+            Expand-Archive -Force -Path $OZOADLabZipPath -DestinationPath $Env:TEMP -ErrorAction Stop
             # Remove the archive
-            Remove-Item -Path $this.ozoAdLabZipPath -Force
+            Remove-Item -Path $OZOADLabZipPath -Force
             # Move the extracted folder to the ozoAdLab
             Move-Item -Force -Path (Get-ChildItem -Path $Env:TEMP -ErrorAction Stop | Where-Object {$_.Name -Like $OZOADLabDirLike} | Select-Object -First 1).FullName -Destination $OZOADLabPath
             # Create required (empty) Mount subdirectory
             New-Item -ItemType Directory -Path (Join-Path -Path $OZOADLabPath -ChildPath "Mount") -ErrorAction Stop
         } Catch {
             # Failure
-            $this.ozoLogger.Write("Error downloading and extracting the latest OZO AD Lab resources. Please manually download and extract the latest release and run this script again to continue. See https://onezeroone.dev/active-directory-lab-part-ii-customization-prerequisites/ for more information.","Error")
+            $this.ozoLogger.Write("Error downloading and extracting the latest OZO AD Lab resources with error " + $_ + ". Please manually download and extract the latest release and run this script again to continue. See https://onezeroone.dev/active-directory-lab-part-ii-customization-prerequisites for more information.","Error")
             $Return = $false
         }
         # Return
@@ -320,35 +320,21 @@ Class Main {
             # Determine if the file does not already exist
             If ([Boolean](Test-Path -Path $isoPath -ErrorAction SilentlyContinue) -eq $false) {
                 # Report
-                $this.ozoLogger.Write(("Downloading the " + $($ozoADLabIso.Key) + " ISO (this could take some time)."),"Information")
+                $this.ozoLogger.Write(("Downloading " + $($ozoADLabIso.Key) + " (this could take some time)."),"Information")
                 # The ISO does not already exist; try to download
                 Try {
                     Invoke-WebRequest -Uri $($ozoADLabIso.Value) -OutFile $isoPath -ErrorAction Stop
                     # Success
                 } Catch {
                     # Failure
+                    $this.ozoLogger.Write("Error downloading " + $($ozoADLabIso.Key) + ". Please manually download the required ISOs and name them as described in https://onezeroone.dev/active-directory-lab-part-ii-customization-prerequisites.","Error")
                     $Return = $false
                 }
             }
         }
-        # Determine if Return is false
-        If ($Return -eq $false) {
-            # Return is false
-            $this.ozoLogger.Write("Error downloading one or more ISOs. Please manually download the required ISOs and name them as described in https://onezeroone.dev/active-directory-lab-part-ii-customization-prerequisites/ for more information.","Error")
-        }
         # Return
         return $Return
     }
-}
-
-Function Get-OZOYesNo {
-    # Prompt the user to restart and return the lowercase of the first letter of their response
-    [String]$response = $null
-    Do {
-        $response = (Read-Host "(Y/N)")[0]
-    } Until ($response.ToLower() -eq "y" -Or $response.ToLower() -eq "n")
-    # Return response
-    return $response
 }
 
 # MAIN
