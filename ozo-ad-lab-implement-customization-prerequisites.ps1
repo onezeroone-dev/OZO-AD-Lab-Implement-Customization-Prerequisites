@@ -85,7 +85,7 @@ Class Main {
             # Determine if the source ISOs are not downloaded
             If ($this.DownloadISOs($OZOADLabISOs,$OZOADLabPath) -eq $false) { $this.prerequisiteSatisfied = $false }
             # Determine if all prerequisites were met
-            If ($this.prerequisiteSatisfied -eq $true) {
+            If ($this.prerequisitesSatisfied -eq $true) {
                 # All prerequisites are satisfied
                 $this.ozoLogger.Write("All prerequisites are satisfied. Please see https://onezeroone.dev/active-directory-lab-customize-the-windows-installer-isos for the next steps.","Information")
             }
