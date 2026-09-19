@@ -28,138 +28,74 @@
     https://github.com/onezeroone-dev/OZO-AD-Lab-Implement-Customization-Prerequisites/blob/main/README.md
 #>
 
+#PARAMETERS
+[CmdletBinding()] Param(
+    [Parameter(Mandatory=$false)][String] $FeatureName = "Microsoft-Hyper-V-All",
+    [Parameter(Mandatory=$false)][String] $LocalGroup = "Hyper-V Administrators",
+    [Parameter(Mandatory=$false)][String] $OscdimgExePath = (Join-Path -Path ${Env:ProgramFiles(x86)} -ChildPath "Windows Kits\10\Assessment and Deployment Kit\Deployment Tools\amd64\Oscdimg\oscdimg.exe"),
+    [Parameter(Mandatory=$false)][String] $OZOADLabDirLike = "onezeroone-dev-OZO-AD-Lab*",
+    [Parameter(Mandatory=$false)][String] $OZOADLabPath = (Join-Path -Path $Env:SystemDrive -ChildPath "ozo-ad-lab"),
+    [Parameter(Mandatory=$false)][HashTable] $OZOADLabISOs = @{
+        "almalinux-boot.iso" = "https://repo.almalinux.org/almalinux/10/isos/x86_64/AlmaLinux-10-latest-x86_64-boot.iso"
+        "microsoft-windows-11-enterprise-evaluation.iso" = "https://software-static.download.prss.microsoft.com/dbazure/888969d5-f34g-4e03-ac9d-1f9786c66749/26100.1742.240906-0331.ge_release_svc_refresh_CLIENTENTERPRISEEVAL_OEMRET_x64FRE_en-us.iso"
+        "microsoft-windows-11-laof.iso" = "https://software-static.download.prss.microsoft.com/dbazure/888969d5-f34g-4e03-ac9d-1f9786c66749/26100.1.240331-1435.ge_release_amd64fre_CLIENT_LOF_PACKAGES_OEM.iso"
+        "microsoft-windows-server-2025-evaluation.iso" = "https://software-static.download.prss.microsoft.com/dbazure/888969d5-f34g-4e03-ac9d-1f9786c66749/26100.1742.240906-0331.ge_release_svc_refresh_SERVER_EVAL_x64FRE_en-us.iso"
+    },
+    [Parameter(Mandatory=$false)][String] $OZOADLabZipPath = (Join-Path -Path $Env:USERPROFILE -ChildPath "Downloads\ozo-ad-lab-latest.zip"),
+    [Parameter(Mandatory=$false)][String] $OZOADLabZipUri = "https://api.github.com/repos/onezeroone-dev/OZO-AD-Lab/releases/latest",
+    [Parameter(Mandatory=$false)][String] $SimExePath = (Join-Path -Path ${Env:ProgramFiles(x86)} -ChildPath "Windows Kits\10\Assessment and Deployment Kit\Deployment Tools\WSIM\x86\imgmgr.exe"),
+    [Parameter(Mandatory=$false)][String] $WinAdkFileUri = "https://go.microsoft.com/fwlink/?linkid=2128854",
+    [Parameter(Mandatory=$false)][String] $WinAdkPath = (Join-Path -Path (Join-Path -Path $Env:USERPROFILE -ChildPath "Downloads") -Childpath "adksetup.exe")
+)
+
+# CLASSES
 Class ADLICP {
     # PROPERTIES: Booleans
-    [Boolean] $Relog = $true
-    # PROPERTIES: Strings
-    [String]  $currentUser     = $null
-    [String]  $downloadsDir    = $null
-    [String]  $featureName     = $null
-    [String]  $gitExePath      = $null
-    [String]  $localGroup      = $null
-    [String]  $ozoAdLabDirLike = $null
-    [String]  $ozoAdLabPath    = $null
-    [String]  $ozoAdLabZipPath = $null
-    [String]  $ozoAdLabZipUri  = $null
-    [String]  $winAdkFileName  = $null
-    [String]  $winAdkPath      = $null
-    [String]  $winAdkFileUri   = $null
-    [String]  $wingetExePath   = $null
+    [Boolean] $prerequisitesSatisfied = $true
     # PROPERTIES: PSCustomObjects
     [PSCustomObject] $ozoLogger = @()
-    # PROPERTIES: Lists
-    [System.Collections.Generic.List[PSCustomObject]] $ozoADLabISOs = @()
-    # METHODS
-    # Constructor method
-    ADLICP() {
-        # Set properties
-        $this.currentUser       = ([System.Security.Principal.WindowsIdentity]::GetCurrent().Name)
-        $this.downloadsDir      = (Join-Path -Path $Env:USERPROFILE -ChildPath "Downloads")
-        $this.featureName       = "Microsoft-Hyper-V-All"
-        $this.localGroup        = "Hyper-V Administrators"
-        $this.ozoAdLabDirLike   = "onezeroone-dev-OZO-AD-Lab*"
-        $this.ozoAdLabPath      = (Join-Path -Path $Env:SystemDrive -ChildPath "ozo-ad-lab")
-        $this.ozoAdLabZipPath   = (Join-Path -Path $Env:USERPROFILE -ChildPath "Downloads\ozo-ad-lab-latest.zip")
-        $this.ozoAdLabZipUri    = "https://api.github.com/repos/onezeroone-dev/OZO-AD-Lab/releases/latest"
-        $this.winAdkFileName    = "adksetup.exe"
-        $this.winAdkPath         = (Join-Path -Path $this.downloadsDir -Childpath $this.winAdkFileName)
-        $this.winAdkFileUri     = "https://download.microsoft.com/download/2/d/9/2d9c8902-3fcd-48a6-a22a-432b08bed61e/ADK/adksetup.exe"
-        $this.wingetExePath     = (Join-Path -Path $Env:LOCALAPPDATA -ChildPath "Microsoft\WindowsApps\winget.exe")
+    # METHODS: Constructor method
+    Main($FeatureName,$LocalGroup,$OscdimgExePath,$OZOADLabDirLike,$OZOADLabPath,$OZOADLabISOs,$OZOADLabZipPath,$OZOADLabZipUri,$SimExePath,$WinAdkFileUri,$WinAdkPath) {
         # Populate the ozoADLabISOs list
-        $this.ozoADLabISOs.Add([PSCustomObject]@{Name="almalinux-boot.iso";Uri="https://repo.almalinux.org/almalinux/10/isos/x86_64/AlmaLinux-10-latest-x86_64-boot.iso"})
-        $this.ozoADLabISOs.Add([PSCustomObject]@{Name="microsoft-windows-11-enterprise-evaluation.iso";Uri="https://software-static.download.prss.microsoft.com/dbazure/888969d5-f34g-4e03-ac9d-1f9786c66749/26100.1742.240906-0331.ge_release_svc_refresh_CLIENTENTERPRISEEVAL_OEMRET_x64FRE_en-us.iso"})
-        $this.ozoADLabISOs.Add([PSCustomObject]@{Name="microsoft-windows-11-laof.iso";Uri="https://software-static.download.prss.microsoft.com/dbazure/888969d5-f34g-4e03-ac9d-1f9786c66749/26100.1.240331-1435.ge_release_amd64fre_CLIENT_LOF_PACKAGES_OEM.iso"})
-        $this.ozoADLabISOs.Add([PSCustomObject]@{Name="microsoft-windows-server-2025-evaluation.iso";Uri="https://software-static.download.prss.microsoft.com/dbazure/888969d5-f34g-4e03-ac9d-1f9786c66749/26100.1742.240906-0331.ge_release_svc_refresh_SERVER_EVAL_x64FRE_en-us.iso"})
         # Create a logger object
         $this.ozoLogger = (New-OZOLogger)
-        # Declare ourselves to the world
-        $this.ozoLogger.Write("Process starting.","Information")
         # Call ValidateEnvironment to determine if we can proceed
-        If ($this.ValidateEnvironment() -eq $true) {
-            # Environment validates; report
-            $this.ozoLogger.Write("Environment validates.","Information")
-            # Call ProcessPrerequisites to ...process the prerequisites
-            $this.ProcessPrerequisites()
+        If ($this.ValidateEnvironment($OZOADLabDirLike,$OZOADLabPath) -eq $true) {
+            # Determine if the Hyper-V features are not installed and a restart is required
+            If ($this.InstallHyperV($FeatureName) -eq $false) {
+                # Hyper-V features are not installed
+                $this.prerequisiteSatisfied = $false
+            } Else {
+                # Hyper-V features are installed; determine if a restart is required
+                If ($this.RestartRequired($FeatureName) -eq $true) {
+                    # Restart is required
+                    $this.prerequisiteSatisfied = $false
+                }
+            }
+            # Determine if the Debian WSL distribution is not installed
+            If ($this.InstallWSLDebian() -eq $false) { $this.prerequisitesSatisfied -eq $false }
+            # Determine if the user not is added to the local Hyper-V Administrators group
+            If ($this.ManageLocalHyperVAdministratorsGroup(([System.Security.Principal.WindowsIdentity]::GetCurrent().Name),$LocalGroup) -eq $false) { $this.prerequisiteSatisfied = $false }
+            # Determine if the VM switches are not created
+            If ($this.CreateVMSwitches() -eq $false) { $this.prerequisiteSatisfied = $false }
+            # Determine if the Microsoft ADK is not installed
+            If ($this.InstallMicrosoftADK($OscdimgExePath,$SimExePath,$WinAdkFileUri,$WinAdkPath) -eq $false) { $this.prerequisiteSatisfied = $false }
+            # Determine if the OZO AD Lab resources are not downloaded and extracted
+            If ($this.GetOZOADLabResources($OZOADLabPath,$OZOADLabDirLike,$OZOADLabZipUri) -eq $false) { $this.prerequisiteSatisfied = $false }
+            # Determine if the source ISOs are not downloaded
+            If ($this.DownloadISOs($OZOADLabISOs,$OZOADLabPath) -eq $false) { $this.prerequisiteSatisfied = $false }
+            # Determine if all prerequisites were met
+            If ($this.prerequisiteSatisfied -eq $true) {
+                # All prerequisites are satisfied
+                $this.ozoLogger.Write("All prerequisites are satisfied. Please see https://onezeroone.dev/active-directory-lab-customize-the-windows-installer-isos for the next steps.","Information")
+            }
         } Else {
             # Environment did not validate
             $this.ozoLogger.Write("The environment did not validate.","Error")
         }
-        # Bid adieu to the world
-        $this.ozoLogger.Write("Process complete.","Information")
     }
-    # Process prerequisites method
-    Hidden [Void] ProcessPrerequisites() {
-        # Environment validates; install Hyper-V features
-        $this.ozoLogger.Write("Installing Hyper-V features.","Information")
-        If ($this.InstallHyperV() -eq $true) {
-            # Hyper-V features are installed; install the Debian WSL distribution
-            If ($this.InstallWSLDebian() -eq $true) {
-                # WSL Debian distribution is installed
-                $this.ozoLogger.Write("Determining if a restart is required.","Information")
-                # Determine if a reboot is not required
-                If ($this.RestartRequired() -eq $false) {
-                    # Restart is not required
-                    $this.ozoLogger.Write("Adding user to the local Hyper-V Administrators group.","Information")
-                    # Determine if the user is added to the local Hyper-V Administrators group
-                    If ($this.ManageLocalHyperVAdministratorsGroup() -eq $true) {
-                        # Local user is added to the local Hyper-V Administrators group
-                        $this.ozoLogger.Write("Creating the Hyper-V VMSwitches.","Information")
-                        # Determine if the VM switches are created
-                        If ($this.CreateVMSwitches() -eq $true) {
-                            # VM switches are created
-                            $this.ozoLogger.Write("Installing the Microsoft ADK (Deployment Tools).","Information")
-                            # Determine if the Microsoft ADK is installed
-                            If ($this.InstallMicrosoftADK() -eq $true) {
-                                # Microsoft ADK is installed
-                                $this.ozoLogger.Write("Downloading and extracting the latest release of the OZO AD Lab resources.","Information")
-                                # Determine if the OZO AD Lab resources are downloaded and extracted
-                                If ($this.GetADLabResources() -eq $true) {
-                                    # Got AD Lab resources; download the ISOs
-                                    $this.ozoLogger.Write("Downloading the source ISOs (this could take some time).","Information")
-                                    # Determine if the source ISOs are downloaded
-                                    If ($this.DownloadISOs() -eq $true) {
-                                        # ISOs are downloaded; report all prerequisites satisfied
-                                        $this.ozoLogger.Write("All prerequisites are satisfied. Please see https://onezeroone.dev/active-directory-lab-customize-the-windows-installer-isos for the next steps.","Information")
-                                    } Else {
-                                        # Download error
-                                        $this.ozoLogger.Write("Error downloading ISOs. Please manually download the required ISOs. See https://onezeroone.dev/active-directory-lab-part-ii-customization-prerequisites/ for more information.","Error")
-                                    }
-                                } Else {
-                                    # Unable to get AD Lab Resources
-                                    $this.ozoLogger.Write("Error downloading and extracting the latest OZO AD Lab resources. Please manually download and extract the latest release and run this script again to continue. See https://onezeroone.dev/active-directory-lab-part-ii-customization-prerequisites/ for more information.","Error")
-                                }
-                            } Else {
-                                # Microsoft SDK installation error
-                                $this.ozoLogger.Write("Error attempting to download and install the Microsoft ADK. Please manually download and install and then run this script again to continue. See https://onezeroone.dev/active-directory-lab-part-ii-customization-prerequisites/ for more information.","Error")
-                            }
-                        } Else {
-                            # VMSwitch creation error
-                            $this.ozoLogger.Write("Error creating the VM switches. You may need to log out and back in to refresh your group membership. If that does not help, please manually create these switches. Then run this script again to continue. See https://onezeroone.dev/active-directory-lab-part-ii-customization-prerequisites/ for more information.","Error")
-                        }
-                    } Else {
-                        # Error adding user to local Hyper-V Administrators group
-                        $this.ozoLogger.Write(("Failure adding user " + $this.currentUser + " to the " + $this.localGroup + " group. Please manually add this user to this group then run this script again to continue. See https://onezeroone.dev/active-directory-lab-part-ii-customization-prerequisites/ for more information."),"Error")
-                    }
-                } Else {
-                    # Restart is required
-                    $this.ozoLogger.Write("Please restart to complete the feature installation and then run this script again to continue.","Warning")
-                    # Get restart decision
-                    If ((Get-OZOYesNo) -eq "y") {
-                        # User elects to restart
-                        Restart-Computer
-                    }
-                }
-            } Else {
-                # Error installing WSL Debian
-                $this.ozoLogger.Write(("Error installing the WSD Debian distribution. Please manually install this distribution and then run this script again to continue. See https://onezeroone.dev/active-directory-lab-part-ii-customization-prerequisites/ for more information."),"Error")    
-            }
-        } Else {
-            # Error installing Hyper-V Feature
-            $this.ozoLogger.Write(("Error installing the " + $this.featureName + " feature. Please manually install this feature and then run this script again to continue. See https://onezeroone.dev/active-directory-lab-part-ii-customization-prerequisites/ for more information."),"Error")
-        }
-    }
-    # Environment validation method
-    Hidden [Boolean] ValidateEnvironment() {
+    # METHODS: Environment validation method
+    Hidden [Boolean] ValidateEnvironment($OZOADLabDirLike,$OZOADLabPath) {
         # Control variable
         [Boolean] $Return = $true
         # Determine if this a user-interactive session
@@ -168,96 +104,108 @@ Class ADLICP {
             $this.ozoLogger.Write("Please run this script in a user-interactive session.","Error")
             $Return = $false
         }
-        # Determine if user is an Administrator
-        If ((Test-OZOLocalAdministrator) -eq $false) {
-            # User is not a local administrator
-            $this.ozoLogger.Write("Please run this script in an Administrator PowerShell","Error")
-            $Return =$false
-        }
-        # Determine of winget.exe does not exist
-        If ((Test-Path -Path $this.wingetExePath) -eq $false) {
-            # Did not find winget.exe
-            $this.ozoLogger.Write("Missing winget.exe","Error")
-            $Return = $false
-        }
         # Determine if there is already an "ozo-ad-lab" folder off the root of the SystemDrive
-        If ((Test-Path -Path $this.ozoAdLabPath) -eq $true) {
+        If ([Boolean](Test-Path -Path $OZOADLabPath -ErrorAction SilentlyContinue) -eq $true) {
             # There is already an "ozo-ad-lab" folder
-            $this.ozoLogger.Write(("Found " + $this.ozoAdLabPath + ". This directory must be removed before proceeding."),"Error")
+            $this.ozoLogger.Write(("Found " + $OZOADLabPath + ". This directory must be removed before proceeding."),"Error")
             $Return = $false
         }
-        # Make sure any previous downloaded + extracted releases of OZO-AD-Lab are wiped
-        (Get-ChildItem -Path $Env:TEMP | Where-Object {$_.Name -Like $this.ozoAdLabDirLike}) | Remove-Item -Recurse -Force
+        # Try to make sure any previous downloaded + extracted releases of OZO-AD-Lab are wiped
+        Try {
+            Get-ChildItem -Path $Env:TEMP -ErrorAction Stop | Where-Object {$_.Name -Like $OZOADLabDirLike} | Remove-Item -Recurse -Force -ErrorAction Stop
+            # Success
+        } Catch {
+            # Failure
+            $this.ozoLogger.Write("Unable to clean up previous OZO-AD-Lab releases from the TEMP directory.","Error")
+            $Return = $false
+        }
         # Return
         return $Return
     }
-    # Install Hyper-V method
-    Hidden [Boolean] InstallHyperV() {
+    # METHODS: Install Hyper-V method
+    Hidden [Boolean] InstallHyperV($FeatureName) {
         # Control variable
         [Boolean] $Return = $true
         # Determine if the feature is present
-        If ([Boolean](Get-WindowsOptionalFeature -Online -FeatureName $this.featureName) -eq $false) {
+        If ([Boolean](Get-WindowsOptionalFeature -Online -FeatureName $FeatureName) -eq $false) {
+            # Report
+            $this.ozoLogger.Write(("Installing " + $FeatureName + " feature."),"Information")
             # Feature is not present; try to install it
             Try {
-                Enable-WindowsOptionalFeature -Online -FeatureName $this.featureName -ErrorAction Stop
+                Enable-WindowsOptionalFeature -Online -FeatureName $FeatureName -ErrorAction Stop
                 # Success
             } Catch {
                 # Failure
+                $this.ozoLogger.Write(("Error installing the " + $FeatureName + " feature. Please manually install this feature and then run this script again to continue. See https://onezeroone.dev/active-directory-lab-part-ii-customization-prerequisites/ for more information."),"Error")
                 $Return = $false
             }
         }
         # Return
         return $Return
     }
-    # Install WSL debian method
+    # METHODS: Reboot required method
+    Hidden [Boolean] RestartRequired($FeatureName) {
+        # Control variable
+        [Boolean] $Return = $false
+        # Report
+        $this.ozoLogger.Write("Determining if a restart is required.","Information")
+        # Determine if feature is present
+        If ((Get-WindowsOptionalFeature -Online -FeatureName $FeatureName).RestartRequired -eq "Required") {
+            # Restart is required
+            $this.ozoLogger.Write(("Please restart to complete the " + $FeatureName + " feature installation and then run this script again to continue."),"Warning")
+            $Return = $true
+            # Get restart decision
+            If ((Get-OZOYesNo) -eq "y") {
+                # User elects to restart
+                Restart-Computer
+            }
+        }
+        # Return
+        return $Return
+    }
+    # METHODS: Install WSL debian method
     Hidden [Boolean] InstallWSLDebian() {
         # Control variable
         [Boolean] $Return = $true
         # Determine if WSL Debian is not installed
         If ([Boolean](wsl -l | Where-Object {$_.Replace("`0","") -Match '^Debian'}) -eq $false) {
+            # Report
+            $this.ozoLogger.Write("Attempting to install the WSL Debian distribution.","Information")
             # Try to install WSL Debian
             Try {
                 & wsl --install --distribution Debian
                 # Success
             } Catch {
                 # Failure
+                $this.ozoLogger.Write(("Error installing the WSD Debian distribution. Please manually install this distribution and then run this script again to continue. See https://onezeroone.dev/active-directory-lab-part-ii-customization-prerequisites/ for more information."),"Error")
                 $Return = $false
             }
         }
         # Return
         return $Return
     }
-    # Reboot required method
-    Hidden [Boolean] RestartRequired() {
-        # Control variable
-        [Boolean] $Return = $false
-        # Determine if feature is present
-        If ((Get-WindowsOptionalFeature -Online -FeatureName $this.featureName).RestartRequired -eq "Required") {
-            # Restart is required
-            $Return = $true   
-        }
-        # Return
-        return $Return
-    }
-    # Manage local Hyper-V Administrators group membership
-    Hidden [Boolean] ManageLocalHyperVAdministratorsGroup() {
+    # METHODS: Manage local Hyper-V Administrators group membership
+    Hidden [Boolean] ManageLocalHyperVAdministratorsGroup($CurrentUser,$LocalGroup) {
         # Control variable
         [Boolean] $Return = $true
         # Determine if the current user is a member of the local Hyper-V Administrators group
-        If ((Get-LocalGroupMember -Name $this.localGroup).Name -NotContains $this.currentUser) {
+        If ((Get-LocalGroupMember -Name $LocalGroup).Name -NotContains $CurrentUser) {
+            # Report
+            $this.ozoLogger.Write(("Adding user to the local " + $LocalGroup + " group."),"Information")
             # User is not in the local group; try to add them
             Try {
-                Add-LocalGroupMember -Group "Hyper-V Administrators" -Member $this.currentUser
+                Add-LocalGroupMember -Group $LocalGroup -Member $CurrentUser -ErrorAction Stop
                 # Success
             } Catch {
                 # Failure
+                $this.ozoLogger.Write(("Failure adding user " + $CurrentUser + " to the " + $LocalGroup + " group. Please manually add this user to this group then run this script again to continue. See https://onezeroone.dev/active-directory-lab-part-ii-customization-prerequisites/ for more information."),"Error")
                 $Return = $false
             }
         }
         # Return
         return $Return
     }
-    # Create VM switches method
+    # METHODS: Create VM switches method
     Hidden [Boolean] CreateVMSwitches() {
         # Control variable
         [Boolean] $Return = $true
@@ -267,17 +215,22 @@ Class ADLICP {
         If ([Boolean](Get-Command -Name Get-VMSwitch -ErrorAction SilentlyContinue) -eq $true) {
             # Get-VMSwitch cmdlet is available; determine if the private switch already exists
             If ([Boolean](Get-VMSwitch -Name "OZO AD Lab Private") -eq $false) {
+                # Report
+                $this.ozoLogger.Write("Creating the Hyper-V OZO AD Lab Private VMSwitch.","Information")
                 # Private switch does not exist; try to create it
                 Try {
                     New-VMSwitch -Name "OZO AD Lab Private" -SwitchType Private -ErrorAction Stop
                     # Success
                 } Catch {
                     # Failure
+                    $this.ozoLogger.Write("Error creating the VM switches. You may need to log out and back in to refresh your group membership. If that does not help, please manually create these switches. Then run this script again to continue. See https://onezeroone.dev/active-directory-lab-part-ii-customization-prerequisites/ for more information.","Error")
                     $Return = $false
                 }
             }
             # Determine if the external switch already exists
             If ([Boolean](Get-VMSwitch -Name "OZO AD Lab External") -eq $false) {
+                # Report
+                $this.ozoLogger.Write("Creating the Hyper-V OZO AD Lab External VMSwitch.","Information")
                 # External switch does not exist; call Get-NetAdapter to display available network connections
                 Get-NetAdapter | Out-Host
                 # Prompt the user for the name of the external network connection until they correctly identify an adapter
@@ -300,80 +253,90 @@ Class ADLICP {
         # Return
         return $Return
     }
-    # Install Microsoft SDK method
-    Hidden [Boolean] InstallMicrosoftADK() {
+    # METHODS: Install Microsoft ADK method
+    Hidden [Boolean] InstallMicrosoftADK($OscdimgExePath,$SimExePath,$WinAdkFileUri,$WinAdkPath) {
         # Control variable
         [Boolean] $Return = $true
         # Local variables
-        [String] $oscdimgExePath = (Join-Path -Path ${Env:ProgramFiles(x86)} -ChildPath "Windows Kits\10\Assessment and Deployment Kit\Deployment Tools\amd64\Oscdimg\oscdimg.exe")
-        [String] $simExePath     = (Join-Path -Path ${Env:ProgramFiles(x86)} -ChildPath "Windows Kits\10\Assessment and Deployment Kit\Deployment Tools\WSIM\x86\imgmgr.exe")
         # Determine if oscdimg.exe is not present
-        If ((Test-Path -Path $oscdimgExePath) -eq $false -Or (Test-Path $simExePath) -eq $false) {
+        If ([Boolean](Test-Path -Path $OscdimgExePath -ErrorAction SilentlyContinue) -eq $false -Or [Boolean](Test-Path $SimExePath -ErrorAction SilentlyContinue) -eq $false) {
+            # Report
+            $this.ozoLogger.Write("Downloading and installing the Microsoft ADK (Deployment Tools).","Information")
             # Did not find oscdimg.exe; try to download and install
             Try {
-                Invoke-WebRequest -Uri $this.winAdkFileUri -OutFile $this.winAdkPath -ErrorAction Stop
+                Invoke-WebRequest -Uri $WinAdkFileUri -OutFile $WinAdkPath -ErrorAction Stop
                 # Success; try to install
                 Try {
-                    Invoke-Command -ScriptBlock { & $this.winAdkPath /quiet /norestart /features OptionId.DeploymentTools } -ErrorAction Stop | Out-Null
+                    Invoke-Command -ScriptBlock { & $WinAdkPath /quiet /norestart /features OptionId.DeploymentTools } -ErrorAction Stop | Out-Null
                     # Success; sleep until the installation is complete
                     Do {
                         Start-Sleep -Seconds 1
-                    } Until ((Test-Path -Path $oscdimgExePath) -eq $true -And (Test-Path $simExePath) -eq $true)
+                    } Until ([Boolean](Test-Path -Path $OscdimgExePath -ErrorAction SilentlyContinue) -eq $true -And [Boolean](Test-Path $SimExePath -ErrorAction SilentlyContinue) -eq $true)
                 } Catch {
                     # Failure
+                    $this.ozoLogger.Write("Error attempting to download the Microsoft ADK. Please manually download and install and then run this script again to continue. See https://onezeroone.dev/active-directory-lab-part-ii-customization-prerequisites/ for more information.","Error")
                     $Return = $false
                 }
             } Catch {
-                # Failure; report
+                # Failure
+                $this.ozoLogger.Write("Error attempting to install the Microsoft ADK. Please manually download and install and then run this script again to continue. See https://onezeroone.dev/active-directory-lab-part-ii-customization-prerequisites/ for more information.","Error")
                 $Return = $false
             }
         }
         # Return
         return $Return
     }
-    # Get AD Lab resources method
-    Hidden [Boolean] GetADLabResources() {
+    # METHODS: Get AD Lab resources method
+    Hidden [Boolean] GetOZOADLabResources($OZOADLabPath,$OZOADLabDirLike,$OZOADLabZipUri) {
         # Control variable
         [Boolean] $Return = $true
+        # Report
+        $this.ozoLogger.Write("Downloading and extracting the latest release of the OZO AD Lab resources.","Information")
         # Try to get the latest zipball
         Try {
-            Invoke-WebRequest -UseBasicParsing -Uri (Invoke-WebRequest -UseBasicParsing -Uri $this.ozoAdLabZipUri -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop).zipball_url -OutFile $this.ozoAdLabZipPath -ErrorAction Stop
+            Invoke-WebRequest -UseBasicParsing -Uri (Invoke-WebRequest -UseBasicParsing -Uri $OZOADLabZipUri -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop).zipball_url -OutFile $this.ozoAdLabZipPath -ErrorAction Stop
             # Success; expand the archive
             Expand-Archive -Force -Path $this.ozoAdLabZipPath -DestinationPath $Env:TEMP -ErrorAction Stop
             # Remove the archive
             Remove-Item -Path $this.ozoAdLabZipPath -Force
             # Move the extracted folder to the ozoAdLab
-            Move-Item -Force -Path (Get-ChildItem -Path $Env:TEMP -ErrorAction Stop | Where-Object {$_.Name -Like $this.ozoAdLabDirLike} | Select-Object -First 1).FullName -Destination $this.ozoAdLabPath
+            Move-Item -Force -Path (Get-ChildItem -Path $Env:TEMP -ErrorAction Stop | Where-Object {$_.Name -Like $OZOADLabDirLike} | Select-Object -First 1).FullName -Destination $OZOADLabPath
             # Create required (empty) Mount subdirectory
-            New-Item -ItemType Directory -Path (Join-Path -Path $this.ozoAdLabPath -ChildPath "Mount") -ErrorAction Stop
+            New-Item -ItemType Directory -Path (Join-Path -Path $OZOADLabPath -ChildPath "Mount") -ErrorAction Stop
         } Catch {
-            $this.ozoLogger.Write($_,"Error")
-            #Failure
+            # Failure
+            $this.ozoLogger.Write("Error downloading and extracting the latest OZO AD Lab resources. Please manually download and extract the latest release and run this script again to continue. See https://onezeroone.dev/active-directory-lab-part-ii-customization-prerequisites/ for more information.","Error")
             $Return = $false
         }
-
         # Return
         return $Return
     }
-    # Download ISOs method
-    Hidden [Boolean] DownloadISOs() {
+    # METHODS: Download ISOs method
+    Hidden [Boolean] DownloadISOs($OZOADLabISOs,$OZOADLabPath) {
         # Control variable
         [Boolean] $Return = $true
-        # Iterate through the ISOs
-        ForEach ($ozoAdLabIso in $this.ozoADLabISOs) {
+        # Iterate through the ISOs Hashtable
+        Foreach ($ozoADLabIso in $OZOADLabISOs.GetEnumerator()) {
             # Generate the ISO path
-            [String] $isoPath = (Join-Path -Path $this.ozoAdLabPath -ChildPath (Join-Path -Path "ISO" -ChildPath $ozoAdLabIso.Name))
+            [String] $isoPath = (Join-Path -Path $OZOADLabPath -ChildPath (Join-Path -Path "ISO" -ChildPath $($ozoADLabIso.Key)))
             # Determine if the file does not already exist
-            If ((Test-Path -Path $isoPath) -eq $false) {
+            If ([Boolean](Test-Path -Path $isoPath -ErrorAction SilentlyContinue) -eq $false) {
+                # Report
+                $this.ozoLogger.Write(("Downloading the " + $(ozoADLabIso.Key) + " ISO (this could take some time)."),"Information")
                 # The ISO does not already exist; try to download
                 Try {
-                    Invoke-WebRequest -Uri $ozoAdLabIso.Uri -OutFile $isoPath -ErrorAction Stop
+                    Invoke-WebRequest -Uri $($ozoADLabIso.Value) -OutFile $isoPath -ErrorAction Stop
                     # Success
                 } Catch {
                     # Failure
                     $Return = $false
                 }
             }
+        }
+        # Determine if Return is false
+        If ($Return -eq $false) {
+            # Return is false
+            $this.ozoLogger.Write("Error downloading one or more ISOs. Please manually download the required ISOs and name them as described in https://onezeroone.dev/active-directory-lab-part-ii-customization-prerequisites/ for more information.","Error")
         }
         # Return
         return $Return
@@ -391,4 +354,4 @@ Function Get-OZOYesNo {
 }
 
 # MAIN
-[ADLICP]::new() | Out-Null
+[Main]::new($FeatureName,$LocalGroup,$OscdimgExePath,$OZOADLabDirLike,$OZOADLabPath,$OZOADLabISOs,$OZOADLabZipPath,$OZOADLabZipUri,$SimExePath,$WinAdkFileUri,$WinAdkPath) | Out-Null
