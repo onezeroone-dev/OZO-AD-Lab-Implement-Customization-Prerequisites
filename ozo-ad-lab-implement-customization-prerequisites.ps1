@@ -1,4 +1,4 @@
-#Requires -Modules @{ModuleName="OZO";ModuleVersion="1.5.1"},@{ModuleName="OZOLogger";ModuleVersion="1.1.0"} -RunAsAdministrator
+#Requires -Modules OZO,OZOLogger -RunAsAdministrator
 
 <#PSScriptInfo
     .VERSION 1.0.1
@@ -49,7 +49,7 @@
 )
 
 # CLASSES
-Class ADLICP {
+Class Main {
     # PROPERTIES: Booleans
     [Boolean] $prerequisitesSatisfied = $true
     # PROPERTIES: PSCustomObjects
@@ -61,7 +61,7 @@ Class ADLICP {
         $this.ozoLogger = (New-OZOLogger)
         # Call ValidateEnvironment to determine if we can proceed
         If ($this.ValidateEnvironment($OZOADLabDirLike,$OZOADLabPath) -eq $true) {
-            # Determine if the Hyper-V features are not installed and a restart is required
+            # Determine if the Hyper-V features are not installed
             If ($this.InstallHyperV($FeatureName) -eq $false) {
                 # Hyper-V features are not installed
                 $this.prerequisiteSatisfied = $false
