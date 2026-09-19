@@ -64,26 +64,26 @@ Class Main {
             # Determine if the Hyper-V features are not installed
             If ($this.InstallHyperV($FeatureName) -eq $false) {
                 # Hyper-V features are not installed
-                $this.prerequisiteSatisfied = $false
+                $this.prerequisitesSatisfied = $false
             } Else {
                 # Hyper-V features are installed; determine if a restart is required
                 If ($this.RestartRequired($FeatureName) -eq $true) {
                     # Restart is required
-                    $this.prerequisiteSatisfied = $false
+                    $this.prerequisitesSatisfied = $false
                 }
             }
             # Determine if the Debian WSL distribution is not installed
             If ($this.InstallWSLDebian() -eq $false) { $this.prerequisitesSatisfied -eq $false }
             # Determine if the user not is added to the local Hyper-V Administrators group
-            If ($this.ManageLocalHyperVAdministratorsGroup(([System.Security.Principal.WindowsIdentity]::GetCurrent().Name),$LocalGroup) -eq $false) { $this.prerequisiteSatisfied = $false }
+            If ($this.ManageLocalHyperVAdministratorsGroup(([System.Security.Principal.WindowsIdentity]::GetCurrent().Name),$LocalGroup) -eq $false) { $this.prerequisitesSatisfied = $false }
             # Determine if the VM switches are not created
-            If ($this.CreateVMSwitches() -eq $false) { $this.prerequisiteSatisfied = $false }
+            If ($this.CreateVMSwitches() -eq $false) { $this.prerequisitesSatisfied = $false }
             # Determine if the Microsoft ADK is not installed
-            If ($this.InstallMicrosoftADK($OscdimgExePath,$SimExePath,$WinAdkFileUri,$WinAdkPath) -eq $false) { $this.prerequisiteSatisfied = $false }
+            If ($this.InstallMicrosoftADK($OscdimgExePath,$SimExePath,$WinAdkFileUri,$WinAdkPath) -eq $false) { $this.prerequisitesSatisfied = $false }
             # Determine if the OZO AD Lab resources are not downloaded and extracted
-            If ($this.GetOZOADLabResources($OZOADLabPath,$OZOADLabDirLike,$OZOADLabZipUri) -eq $false) { $this.prerequisiteSatisfied = $false }
+            If ($this.GetOZOADLabResources($OZOADLabPath,$OZOADLabDirLike,$OZOADLabZipUri) -eq $false) { $this.prerequisitesSatisfied = $false }
             # Determine if the source ISOs are not downloaded
-            If ($this.DownloadISOs($OZOADLabISOs,$OZOADLabPath) -eq $false) { $this.prerequisiteSatisfied = $false }
+            If ($this.DownloadISOs($OZOADLabISOs,$OZOADLabPath) -eq $false) { $this.prerequisitesSatisfied = $false }
             # Determine if all prerequisites were met
             If ($this.prerequisitesSatisfied -eq $true) {
                 # All prerequisites are satisfied
@@ -147,8 +147,6 @@ Class Main {
     Hidden [Boolean] RestartRequired($FeatureName) {
         # Control variable
         [Boolean] $Return = $false
-        # Report
-        $this.ozoLogger.Write("Determining if a restart is required.","Information")
         # Determine if feature is present
         If ((Get-WindowsOptionalFeature -Online -FeatureName $FeatureName).RestartRequired -eq "Required") {
             # Restart is required
@@ -322,7 +320,7 @@ Class Main {
             # Determine if the file does not already exist
             If ([Boolean](Test-Path -Path $isoPath -ErrorAction SilentlyContinue) -eq $false) {
                 # Report
-                $this.ozoLogger.Write(("Downloading the " + $(ozoADLabIso.Key) + " ISO (this could take some time)."),"Information")
+                $this.ozoLogger.Write(("Downloading the " + $($ozoADLabIso.Key) + " ISO (this could take some time)."),"Information")
                 # The ISO does not already exist; try to download
                 Try {
                     Invoke-WebRequest -Uri $($ozoADLabIso.Value) -OutFile $isoPath -ErrorAction Stop
