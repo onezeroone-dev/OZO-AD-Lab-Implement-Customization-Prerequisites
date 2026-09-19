@@ -2,6 +2,7 @@
 
 |Date|Version|Comment|
 |----|-------|-------|
+|2026-Sep-19|1.0.2|Code refactor.|
 |2026-Sep-15|1.0.1|Bug fixes.|
 |2026-Aug-02|1.0.0|Initial release.|
 |2026-Aug-02|0.1.1|Bugfixes and minor updates.|

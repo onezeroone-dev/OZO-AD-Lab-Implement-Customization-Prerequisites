@@ -1,7 +1,7 @@
-#Requires -Modules OZO,OZOLogger -RunAsAdministrator
+#Requires -Modules @{ModuleName="OZO"; ModuleVersion="1.7.0"},OZOLogger -RunAsAdministrator
 
 <#PSScriptInfo
-    .VERSION 1.0.1
+    .VERSION 1.0.2
     .GUID 2a8769c1-6be2-44f3-ae17-47b4138ea2fa
     .AUTHOR Andy Lievertz <alievertz@onezeroone.dev>
     .COMPANYNAME One Zero One
@@ -127,7 +127,7 @@ Class Main {
         # Control variable
         [Boolean] $Return = $true
         # Determine if the feature is present
-        If ([Boolean](Get-WindowsOptionalFeature -Online -FeatureName $FeatureName) -eq $false) {
+        If ([Boolean](Get-WindowsOptionalFeature -Online -FeatureName $FeatureName -ErrorAction SilentlyContinue) -eq $false) {
             # Report
             $this.ozoLogger.Write(("Installing " + $FeatureName + " feature."),"Information")
             # Feature is not present; try to install it
