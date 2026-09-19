@@ -74,8 +74,8 @@ Class Main {
             }
             # Determine if the Debian WSL distribution is not installed
             If ($this.InstallWSLDebian() -eq $false) { $this.prerequisitesSatisfied -eq $false }
-            # Determine if the user not is added to the local Hyper-V Administrators group
-            If ($this.ManageLocalHyperVAdministratorsGroup(([System.Security.Principal.WindowsIdentity]::GetCurrent().Name),$LocalGroup) -eq $false) { $this.prerequisitesSatisfied = $false }
+            # Determine if the user not is added to the local group
+            If ($this.ManageLocalGroup(([System.Security.Principal.WindowsIdentity]::GetCurrent().Name),$LocalGroup) -eq $false) { $this.prerequisitesSatisfied = $false }
             # Determine if the VM switches are not created
             If ($this.CreateVMSwitches() -eq $false) { $this.prerequisitesSatisfied = $false }
             # Determine if the Microsoft ADK is not installed
@@ -143,11 +143,11 @@ Class Main {
         # Return
         return $Return
     }
-    # METHODS: Reboot required method
+    # METHODS: Restart required method
     Hidden [Boolean] RestartRequired($FeatureName) {
         # Control variable
         [Boolean] $Return = $false
-        # Determine if feature is present
+        # Determine if a restart is required
         If ((Get-WindowsOptionalFeature -Online -FeatureName $FeatureName).RestartRequired -eq "Required") {
             # Restart is required
             $this.ozoLogger.Write(("Please restart to complete the " + $FeatureName + " feature installation and then run this script again to continue."),"Warning")
@@ -182,11 +182,11 @@ Class Main {
         # Return
         return $Return
     }
-    # METHODS: Manage local Hyper-V Administrators group membership
-    Hidden [Boolean] ManageLocalHyperVAdministratorsGroup($CurrentUser,$LocalGroup) {
+    # METHODS: Manage local group membership
+    Hidden [Boolean] ManageLocalGroup($CurrentUser,$LocalGroup) {
         # Control variable
         [Boolean] $Return = $true
-        # Determine if the current user is a member of the local Hyper-V Administrators group
+        # Determine if the current user is a member of the local group
         If ((Get-LocalGroupMember -Name $LocalGroup).Name -NotContains $CurrentUser) {
             # Report
             $this.ozoLogger.Write(("Adding user to the local " + $LocalGroup + " group."),"Information")
