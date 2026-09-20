@@ -1,7 +1,7 @@
 #Requires -Modules @{ModuleName="OZO"; ModuleVersion="1.7.0"},OZOLogger -RunAsAdministrator
 
 <#PSScriptInfo
-    .VERSION 1.0.3
+    .VERSION 1.1.0
     .GUID 2a8769c1-6be2-44f3-ae17-47b4138ea2fa
     .AUTHOR Andy Lievertz <alievertz@onezeroone.dev>
     .COMPANYNAME One Zero One
@@ -36,9 +36,7 @@
     [Parameter(Mandatory=$false)][String] $OZOADLabDirLike = "onezeroone-dev-OZO-AD-Lab*",
     [Parameter(Mandatory=$false)][String] $OZOADLabPath = (Join-Path -Path $Env:SystemDrive -ChildPath "ozo-ad-lab"),
     [Parameter(Mandatory=$false)][HashTable] $OZOADLabISOs = @{
-        "almalinux-boot.iso" = "https://repo.almalinux.org/almalinux/10/isos/x86_64/AlmaLinux-10-latest-x86_64-boot.iso"
         "microsoft-windows-11-enterprise-evaluation.iso" = "https://software-static.download.prss.microsoft.com/dbazure/888969d5-f34g-4e03-ac9d-1f9786c66749/26100.1742.240906-0331.ge_release_svc_refresh_CLIENTENTERPRISEEVAL_OEMRET_x64FRE_en-us.iso"
-        "microsoft-windows-11-laof.iso" = "https://software-static.download.prss.microsoft.com/dbazure/888969d5-f34g-4e03-ac9d-1f9786c66749/26100.1.240331-1435.ge_release_amd64fre_CLIENT_LOF_PACKAGES_OEM.iso"
         "microsoft-windows-server-2025-evaluation.iso" = "https://software-static.download.prss.microsoft.com/dbazure/888969d5-f34g-4e03-ac9d-1f9786c66749/26100.1742.240906-0331.ge_release_svc_refresh_SERVER_EVAL_x64FRE_en-us.iso"
     },
     [Parameter(Mandatory=$false)][String] $OZOADLabZipPath = (Join-Path -Path $Env:USERPROFILE -ChildPath "Downloads\ozo-ad-lab-latest.zip"),
@@ -208,10 +206,37 @@ Class Main {
         # Control variable
         [Boolean] $Return = $true
         # Local variables
-        [String]  $externalAdapter = $null
+        [String] $InternalSwitchName = "OZO AD Lab NAT"
+        [String] $SubnetPrefix = "172.16.0.0/24"
+        [String] $InternalIP = "172.16.0.1"
         # Determine if the Get-VMSwitch cmdlet is available
         If ([Boolean](Get-Command -Name Get-VMSwitch -ErrorAction SilentlyContinue) -eq $true) {
-            # Get-VMSwitch cmdlet is available; determine if the private switch already exists
+            # Get-VMSwtich cmdlet is available; determine if the NAT switch does not already exist
+            If ([Boolean](Get-VMSwitch -Name $InternalSwitchName -ErrorAction SilentlyContinue) -eq $false) {
+                # NAT switch does not already exist; try to create it and set the IP address
+                Try {
+                    New-VMSwitch -SwitchName $InternalSwitchName -SwitchType Internal -ErrorAction Stop | Out-Null
+                    New-NetIPAddress -IPAddress $InternalIP -PrefixLength 24 -InterfaceIndex (Get-NetAdapter -ErrorAction Stop | Where-Object { $_.Name -eq $InternalSwitchName }).ifIndex -ErrorAction SilentlyContinue | Out-Null
+                    # Success
+                } Catch {
+                    # Failure
+                    $this.ozoLogger.Write(("Error creating the NAT switch with error " + $_ + ". You may need to log out and back in to refresh your group membership. If that does not resolve the issue, then run this script again to continue. See https://onezeroone.dev/active-directory-lab-part-ii-customization-prerequisites/ for more information."),"Error")
+                    $Return = $false
+                }
+            }
+            # Determine if the NAT network already exists
+            If ([Boolean](Get-NetNat -Name $InternalSwitchName -ErrorAction SilentlyContinue) -eq $false) {
+                # NAT network does not already exist; try to create it
+                Try {
+                    New-NetNat -Name $InternalSwitchName -InternalIPInterfaceAddressPrefix $SubnetPrefix -ErrorAction Stop | Out-Null
+                    # Success
+                } Catch {
+                    # Failure
+                    $this.ozoLogger.Write(("Error creating the NAT network with error " + $_ + ". You may need to manually create this network, then run this script again to continue."),"Error")
+                    $Return = $false
+                }
+            }
+            <# Get-VMSwitch cmdlet is available; determine if the private switch already exists
             If ([Boolean](Get-VMSwitch -Name "OZO AD Lab Private") -eq $false) {
                 # Report
                 $this.ozoLogger.Write("Creating the Hyper-V OZO AD Lab Private VMSwitch.","Information")
@@ -244,6 +269,7 @@ Class Main {
                     $Return = $false
                 }
             }
+            #>
         } Else {
             # Get-VMSwitch cmdlet is not available
             $Return = $false
