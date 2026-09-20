@@ -79,9 +79,9 @@ Class Main {
             # Determine if the Microsoft ADK is not installed
             If ($this.InstallMicrosoftADK($OscdimgExePath,$SimExePath,$WinAdkFileUri,$WinAdkPath) -eq $false) { $this.prerequisitesSatisfied = $false }
             # Determine if the OZO AD Lab resources are not downloaded and extracted
-            If ($this.GetOZOADLabResources($OZOADLabPath,$OZOADLabDirLike,$OZOADLabZipPath,$OZOADLabZipUri) -eq $false) { $this.prerequisitesSatisfied = $false }
+            #If ($this.GetOZOADLabResources($OZOADLabPath,$OZOADLabDirLike,$OZOADLabZipPath,$OZOADLabZipUri) -eq $false) { $this.prerequisitesSatisfied = $false }
             # Determine if the source ISOs are not downloaded
-            If ($this.DownloadISOs($OZOADLabISOs,$OZOADLabPath) -eq $false) { $this.prerequisitesSatisfied = $false }
+            #If ($this.DownloadISOs($OZOADLabISOs,$OZOADLabPath) -eq $false) { $this.prerequisitesSatisfied = $false }
             # Determine if all prerequisites were met
             If ($this.prerequisitesSatisfied -eq $true) {
                 # All prerequisites are satisfied
@@ -217,7 +217,7 @@ Class Main {
                 # NAT switch does not already exist; try to create it and set the IP address
                 Try {
                     New-VMSwitch -SwitchName $InternalSwitchName -SwitchType Internal -ErrorAction Stop | Out-Null
-                    New-NetIPAddress -IPAddress $InternalIP -PrefixLength $PrefixLength -InterfaceIndex (Get-NetAdapter -ErrorAction Stop | Where-Object { $_.Name -eq $InternalSwitchName }).ifIndex -ErrorAction Stop | Out-Null
+                    New-NetIPAddress -IPAddress $InternalIP -PrefixLength $PrefixLength -InterfaceIndex (Get-NetAdapter -ErrorAction Stop | Where-Object { $_.Name -eq ("vEthernet (" + $InternalSwitchName + ")") }).ifIndex -ErrorAction Stop | Out-Null
                     # Success
                 } Catch {
                     # Failure
