@@ -206,9 +206,10 @@ Class Main {
         # Control variable
         [Boolean] $Return = $true
         # Local variables
+        [Int32]  $PrefixLength = 24
         [String] $InternalSwitchName = "OZO AD Lab NAT"
-        [String] $SubnetPrefix = "172.16.0.0/24"
-        [String] $InternalIP = "172.16.0.1"
+        [String] $Subnet = "172.16.1.0"
+        [String] $InternalIP = "172.16.1.1"
         # Determine if the Get-VMSwitch cmdlet is available
         If ([Boolean](Get-Command -Name Get-VMSwitch -ErrorAction SilentlyContinue) -eq $true) {
             # Get-VMSwtich cmdlet is available; determine if the NAT switch does not already exist
@@ -216,7 +217,7 @@ Class Main {
                 # NAT switch does not already exist; try to create it and set the IP address
                 Try {
                     New-VMSwitch -SwitchName $InternalSwitchName -SwitchType Internal -ErrorAction Stop | Out-Null
-                    New-NetIPAddress -IPAddress $InternalIP -PrefixLength 24 -InterfaceIndex (Get-NetAdapter -ErrorAction Stop | Where-Object { $_.Name -eq $InternalSwitchName }).ifIndex -ErrorAction SilentlyContinue | Out-Null
+                    New-NetIPAddress -IPAddress $InternalIP -PrefixLength $PrefixLength -InterfaceIndex (Get-NetAdapter -ErrorAction Stop | Where-Object { $_.Name -eq $InternalSwitchName }).ifIndex -ErrorAction Stop | Out-Null
                     # Success
                 } Catch {
                     # Failure
@@ -228,7 +229,7 @@ Class Main {
             If ([Boolean](Get-NetNat -Name $InternalSwitchName -ErrorAction SilentlyContinue) -eq $false) {
                 # NAT network does not already exist; try to create it
                 Try {
-                    New-NetNat -Name $InternalSwitchName -InternalIPInterfaceAddressPrefix $SubnetPrefix -ErrorAction Stop | Out-Null
+                    New-NetNat -Name $InternalSwitchName -InternalIPInterfaceAddressPrefix ($Subnet + "/" + $PrefixLength.ToString()) -ErrorAction Stop | Out-Null
                     # Success
                 } Catch {
                     # Failure
