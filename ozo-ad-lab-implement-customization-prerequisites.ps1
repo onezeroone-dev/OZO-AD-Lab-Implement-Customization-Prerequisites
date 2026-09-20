@@ -104,8 +104,6 @@ Class Main {
                     $this.prerequisitesSatisfied = $false
                 }
             }
-            # Determine if the Debian WSL distribution is not installed
-            If ($this.InstallWSLDebian() -eq $false) { $this.prerequisitesSatisfied -eq $false }
             # Determine if the user not is added to the local group
             If ($this.ManageLocalGroup(([System.Security.Principal.WindowsIdentity]::GetCurrent().Name),$LocalGroup) -eq $false) { $this.prerequisitesSatisfied = $false }
             # Determine if the VM switches are not created
@@ -188,27 +186,6 @@ Class Main {
             If ((Get-OZOYesNo) -eq "y") {
                 # User elects to restart
                 Restart-Computer
-            }
-        }
-        # Return
-        return $Return
-    }
-    # METHODS: Install WSL debian method
-    Hidden [Boolean] InstallWSLDebian() {
-        # Control variable
-        [Boolean] $Return = $true
-        # Determine if WSL Debian is not installed
-        If ([Boolean](wsl -l | Where-Object {$_.Replace("`0","") -Match '^Debian'}) -eq $false) {
-            # Report
-            $this.ozoLogger.Write("Attempting to install the WSL Debian distribution.","Information")
-            # Try to install WSL Debian
-            Try {
-                & wsl --install --distribution Debian
-                # Success
-            } Catch {
-                # Failure
-                $this.ozoLogger.Write(("Error installing the WSD Debian distribution. Please manually install this distribution and then run this script again to continue. See https://onezeroone.dev/active-directory-lab-part-ii-customization-prerequisites/ for more information."),"Error")
-                $Return = $false
             }
         }
         # Return
