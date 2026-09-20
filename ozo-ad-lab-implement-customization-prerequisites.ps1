@@ -109,7 +109,7 @@ Class Main {
             # Determine if the user not is added to the local group
             If ($this.ManageLocalGroup(([System.Security.Principal.WindowsIdentity]::GetCurrent().Name),$LocalGroup) -eq $false) { $this.prerequisitesSatisfied = $false }
             # Determine if the VM switches are not created
-            If ($this.CreateVMSwitch($PrefixLength,$InternalSwitchName,$Subnet,$InternalIP) -eq $false) { $this.prerequisitesSatisfied = $false }
+            If ($this.CreateVMSwitch($InternalIP,$InternalSwitchName,$PrefixLength,$Subnet) -eq $false) { $this.prerequisitesSatisfied = $false }
             # Determine if the Microsoft ADK is not installed
             If ($this.InstallMicrosoftADK($OscdimgExePath,$SimExePath,$WinAdkFileUri,$WinAdkPath) -eq $false) { $this.prerequisitesSatisfied = $false }
             # Determine if the OZO AD Lab resources are not downloaded and extracted
@@ -235,8 +235,8 @@ Class Main {
         # Return
         return $Return
     }
-    # METHODS: Create VM switches method
-    Hidden [Boolean] CreateVMSwitch($PrefixLength,$InternalSwitchName,$Subnet,$InternalIP) {
+    # METHODS: Create VM switch method
+    Hidden [Boolean] CreateVMSwitch($InternalIP,$InternalSwitchName,$PrefixLength,$Subnet) {
         # Control variable
         [Boolean] $Return = $true
         # Determine if the Get-VMSwitch cmdlet is available
