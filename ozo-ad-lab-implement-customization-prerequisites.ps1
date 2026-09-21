@@ -68,8 +68,8 @@
     [Parameter(Mandatory=$false,HelpMessage="The pattern to identify the OZO AD Lab directory.")][String] $OZOADLabDirLike = "onezeroone-dev-OZO-AD-Lab*",
     [Parameter(Mandatory=$false,HelpMessage="The path to the OZO AD Lab directory.")][String] $OZOADLabPath = (Join-Path -Path $Env:SystemDrive -ChildPath "ozo-ad-lab"),
     [Parameter(Mandatory=$false,HelpMessage="A hashtable of ISO filenames and their corresponding download URIs.")][HashTable] $OZOADLabISOs = @{
-        "microsoft-windows-11-enterprise-evaluation.iso" = "https://software-static.download.prss.microsoft.com/dbazure/888969d5-f34g-4e03-ac9d-1f9786c66749/26100.1742.240906-0331.ge_release_svc_refresh_CLIENTENTERPRISEEVAL_OEMRET_x64FRE_en-us.iso"
-        "microsoft-windows-server-2025-evaluation.iso" = "https://software-static.download.prss.microsoft.com/dbazure/888969d5-f34g-4e03-ac9d-1f9786c66749/26100.1742.240906-0331.ge_release_svc_refresh_SERVER_EVAL_x64FRE_en-us.iso"
+        "microsoft-windows-client-evaluation.iso" = "https://software-static.download.prss.microsoft.com/dbazure/888969d5-f34g-4e03-ac9d-1f9786c66749/26100.1742.240906-0331.ge_release_svc_refresh_CLIENTENTERPRISEEVAL_OEMRET_x64FRE_en-us.iso"
+        "microsoft-windows-server-evaluation.iso" = "https://software-static.download.prss.microsoft.com/dbazure/888969d5-f34g-4e03-ac9d-1f9786c66749/26100.1742.240906-0331.ge_release_svc_refresh_SERVER_EVAL_x64FRE_en-us.iso"
     },
     [Parameter(Mandatory=$false,HelpMessage="The path to the OZO AD Lab ZIP file.")][String] $OZOADLabZipPath = (Join-Path -Path $Env:USERPROFILE -ChildPath "Downloads\ozo-ad-lab-latest.zip"),
     [Parameter(Mandatory=$false,HelpMessage="The URI to download the latest OZO AD Lab ZIP file.")][String] $OZOADLabZipUri = "https://api.github.com/repos/onezeroone-dev/OZO-AD-Lab/releases/latest",
