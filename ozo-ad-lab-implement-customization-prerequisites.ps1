@@ -1,7 +1,7 @@
 #Requires -Modules @{ModuleName="OZO"; ModuleVersion="1.7.0"},OZOLogger -RunAsAdministrator
 
 <#PSScriptInfo
-    .VERSION 1.0.3
+    .VERSION 1.1.0
     .GUID 2a8769c1-6be2-44f3-ae17-47b4138ea2fa
     .AUTHOR Andy Lievertz <alievertz@onezeroone.dev>
     .COMPANYNAME One Zero One
@@ -22,6 +22,36 @@
     See description.
     .DESCRIPTION 
     Implements the customization prerequisites for the One Zero One AD Lab.
+    .PARAMETER FeatureName
+    The name of the Windows feature to install. Default is "Microsoft-Hyper-V-All".
+    .PARAMETER InternalIP
+    The internal IP address for the lab network. Default is "172.16.1.1".
+    .PARAMETER InternalSwitchName
+    The name of the internal virtual switch. Default is "OZO AD Lab NAT".
+    .PARAMETER LocalGroup
+    The local group to which the current user should be added. Default is "Hyper-V Administrators".
+    .PARAMETER OscdimgExePath
+    The path to the Oscdimg executable. Default is the typical installation path within the Windows Kits directory.
+    .PARAMETER OZOADLabDirLike
+    The pattern to identify the OZO AD Lab directory. Default is "onezeroone-dev-OZO-AD-Lab*".
+    .PARAMETER OZOADLabPath
+    The path to the OZO AD Lab directory. Default is "$Env:SystemDrive\ozo-ad-lab".
+    .PARAMETER OZOADLabISOs
+    A hashtable of ISO filenames and their corresponding download URIs.
+    .PARAMETER OZOADLabZipPath
+    The path to the OZO AD Lab ZIP file. Default is "$Env:SystemDrive\ozo-ad-lab.zip".
+    .PARAMETER OZOADLabZipUri
+    The URI to download the latest OZO AD Lab ZIP file. Default is "https://api.github.com/repos/onezeroone-dev/OZO-AD-Lab/releases/latest".
+    .PARAMETER PrefixLength
+    The prefix length for the lab network subnet. Default is 24.
+    .PARAMETER SimExePath
+    The path to the SIM executable. Default is the typical installation path within the Windows Kits directory.
+    .PARAMETER Subnet
+    The subnet for the lab network. Default is "172.16.1.0".
+    .PARAMETER WinAdkFileUri
+    The URI to download the Windows ADK setup file. Default is "https://go.microsoft.com/fwlink/?linkid=2128854".
+    .PARAMETER WinAdkPath
+    The path to the Windows ADK setup file. Default is "$Env:USERPROFILE\Downloads\adksetup.exe".
     .EXAMPLE
     ozo-ad-lab-implement-customization-prerequisites
     .LINK
@@ -30,22 +60,24 @@
 
 #PARAMETERS
 [CmdletBinding()] Param(
-    [Parameter(Mandatory=$false)][String] $FeatureName = "Microsoft-Hyper-V-All",
-    [Parameter(Mandatory=$false)][String] $LocalGroup = "Hyper-V Administrators",
-    [Parameter(Mandatory=$false)][String] $OscdimgExePath = (Join-Path -Path ${Env:ProgramFiles(x86)} -ChildPath "Windows Kits\10\Assessment and Deployment Kit\Deployment Tools\amd64\Oscdimg\oscdimg.exe"),
-    [Parameter(Mandatory=$false)][String] $OZOADLabDirLike = "onezeroone-dev-OZO-AD-Lab*",
-    [Parameter(Mandatory=$false)][String] $OZOADLabPath = (Join-Path -Path $Env:SystemDrive -ChildPath "ozo-ad-lab"),
-    [Parameter(Mandatory=$false)][HashTable] $OZOADLabISOs = @{
-        "almalinux-boot.iso" = "https://repo.almalinux.org/almalinux/10/isos/x86_64/AlmaLinux-10-latest-x86_64-boot.iso"
-        "microsoft-windows-11-enterprise-evaluation.iso" = "https://software-static.download.prss.microsoft.com/dbazure/888969d5-f34g-4e03-ac9d-1f9786c66749/26100.1742.240906-0331.ge_release_svc_refresh_CLIENTENTERPRISEEVAL_OEMRET_x64FRE_en-us.iso"
-        "microsoft-windows-11-laof.iso" = "https://software-static.download.prss.microsoft.com/dbazure/888969d5-f34g-4e03-ac9d-1f9786c66749/26100.1.240331-1435.ge_release_amd64fre_CLIENT_LOF_PACKAGES_OEM.iso"
-        "microsoft-windows-server-2025-evaluation.iso" = "https://software-static.download.prss.microsoft.com/dbazure/888969d5-f34g-4e03-ac9d-1f9786c66749/26100.1742.240906-0331.ge_release_svc_refresh_SERVER_EVAL_x64FRE_en-us.iso"
+    [Parameter(Mandatory=$false,HelpMessage="The name of the Windows feature to install.")][String] $FeatureName = "Microsoft-Hyper-V-All",
+    [Parameter(Mandatory=$false,HelpMessage="The internal IP address for the lab network.")][String] $InternalIP = "172.16.1.1",
+    [Parameter(Mandatory=$false,HelpMessage="The name of the internal virtual switch.")][String] $InternalSwitchName = "OZO AD Lab NAT",
+    [Parameter(Mandatory=$false,HelpMessage="The local group to which the current user should be added.")][String] $LocalGroup = "Hyper-V Administrators",
+    [Parameter(Mandatory=$false,HelpMessage="The path to the Oscdimg executable.")][String] $OscdimgExePath = (Join-Path -Path ${Env:ProgramFiles(x86)} -ChildPath "Windows Kits\10\Assessment and Deployment Kit\Deployment Tools\amd64\Oscdimg\oscdimg.exe"),
+    [Parameter(Mandatory=$false,HelpMessage="The pattern to identify the OZO AD Lab directory.")][String] $OZOADLabDirLike = "onezeroone-dev-OZO-AD-Lab*",
+    [Parameter(Mandatory=$false,HelpMessage="The path to the OZO AD Lab directory.")][String] $OZOADLabPath = (Join-Path -Path $Env:SystemDrive -ChildPath "ozo-ad-lab"),
+    [Parameter(Mandatory=$false,HelpMessage="A hashtable of ISO filenames and their corresponding download URIs.")][HashTable] $OZOADLabISOs = @{
+        "microsoft-windows-client-evaluation.iso" = "https://software-static.download.prss.microsoft.com/dbazure/888969d5-f34g-4e03-ac9d-1f9786c66749/26100.1742.240906-0331.ge_release_svc_refresh_CLIENTENTERPRISEEVAL_OEMRET_x64FRE_en-us.iso"
+        "microsoft-windows-server-evaluation.iso" = "https://software-static.download.prss.microsoft.com/dbazure/888969d5-f34g-4e03-ac9d-1f9786c66749/26100.1742.240906-0331.ge_release_svc_refresh_SERVER_EVAL_x64FRE_en-us.iso"
     },
-    [Parameter(Mandatory=$false)][String] $OZOADLabZipPath = (Join-Path -Path $Env:USERPROFILE -ChildPath "Downloads\ozo-ad-lab-latest.zip"),
-    [Parameter(Mandatory=$false)][String] $OZOADLabZipUri = "https://api.github.com/repos/onezeroone-dev/OZO-AD-Lab/releases/latest",
-    [Parameter(Mandatory=$false)][String] $SimExePath = (Join-Path -Path ${Env:ProgramFiles(x86)} -ChildPath "Windows Kits\10\Assessment and Deployment Kit\Deployment Tools\WSIM\x86\imgmgr.exe"),
-    [Parameter(Mandatory=$false)][String] $WinAdkFileUri = "https://go.microsoft.com/fwlink/?linkid=2128854",
-    [Parameter(Mandatory=$false)][String] $WinAdkPath = (Join-Path -Path (Join-Path -Path $Env:USERPROFILE -ChildPath "Downloads") -Childpath "adksetup.exe")
+    [Parameter(Mandatory=$false,HelpMessage="The path to the OZO AD Lab ZIP file.")][String] $OZOADLabZipPath = (Join-Path -Path $Env:USERPROFILE -ChildPath "Downloads\ozo-ad-lab-latest.zip"),
+    [Parameter(Mandatory=$false,HelpMessage="The URI to download the latest OZO AD Lab ZIP file.")][String] $OZOADLabZipUri = "https://api.github.com/repos/onezeroone-dev/OZO-AD-Lab/releases/latest",
+    [Parameter(Mandatory=$false,HelpMessage="The prefix length for the lab network subnet.")][Int32] $PrefixLength = 24,
+    [Parameter(Mandatory=$false,HelpMessage="The path to the SIM executable.")][String] $SimExePath = (Join-Path -Path ${Env:ProgramFiles(x86)} -ChildPath "Windows Kits\10\Assessment and Deployment Kit\Deployment Tools\WSIM\x86\imgmgr.exe"),
+    [Parameter(Mandatory=$false,HelpMessage="The subnet for the lab network.")][String] $Subnet = "172.16.1.0",
+    [Parameter(Mandatory=$false,HelpMessage="The URI to download the Windows ADK setup file.")][String] $WinAdkFileUri = "https://go.microsoft.com/fwlink/?linkid=2128854",
+    [Parameter(Mandatory=$false,HelpMessage="The path to the Windows ADK setup file.")][String] $WinAdkPath = (Join-Path -Path (Join-Path -Path $Env:USERPROFILE -ChildPath "Downloads") -Childpath "adksetup.exe")
 )
 
 # CLASSES
@@ -55,7 +87,7 @@ Class Main {
     # PROPERTIES: PSCustomObjects
     [PSCustomObject] $ozoLogger = @()
     # METHODS: Constructor method
-    Main($FeatureName,$LocalGroup,$OscdimgExePath,$OZOADLabDirLike,$OZOADLabPath,$OZOADLabISOs,$OZOADLabZipPath,$OZOADLabZipUri,$SimExePath,$WinAdkFileUri,$WinAdkPath) {
+    Main($FeatureName,$InternalIP,$InternalSwitchName,$LocalGroup,$OscdimgExePath,$OZOADLabDirLike,$OZOADLabPath,$OZOADLabISOs,$OZOADLabZipPath,$OZOADLabZipUri,$PrefixLength,$SimExePath,$Subnet,$WinAdkFileUri,$WinAdkPath) {
         # Populate the ozoADLabISOs list
         # Create a logger object
         $this.ozoLogger = (New-OZOLogger)
@@ -72,12 +104,10 @@ Class Main {
                     $this.prerequisitesSatisfied = $false
                 }
             }
-            # Determine if the Debian WSL distribution is not installed
-            If ($this.InstallWSLDebian() -eq $false) { $this.prerequisitesSatisfied -eq $false }
             # Determine if the user not is added to the local group
             If ($this.ManageLocalGroup(([System.Security.Principal.WindowsIdentity]::GetCurrent().Name),$LocalGroup) -eq $false) { $this.prerequisitesSatisfied = $false }
             # Determine if the VM switches are not created
-            If ($this.CreateVMSwitches() -eq $false) { $this.prerequisitesSatisfied = $false }
+            If ($this.CreateVMSwitch($InternalIP,$InternalSwitchName,$PrefixLength,$Subnet) -eq $false) { $this.prerequisitesSatisfied = $false }
             # Determine if the Microsoft ADK is not installed
             If ($this.InstallMicrosoftADK($OscdimgExePath,$SimExePath,$WinAdkFileUri,$WinAdkPath) -eq $false) { $this.prerequisitesSatisfied = $false }
             # Determine if the OZO AD Lab resources are not downloaded and extracted
@@ -161,27 +191,6 @@ Class Main {
         # Return
         return $Return
     }
-    # METHODS: Install WSL debian method
-    Hidden [Boolean] InstallWSLDebian() {
-        # Control variable
-        [Boolean] $Return = $true
-        # Determine if WSL Debian is not installed
-        If ([Boolean](wsl -l | Where-Object {$_.Replace("`0","") -Match '^Debian'}) -eq $false) {
-            # Report
-            $this.ozoLogger.Write("Attempting to install the WSL Debian distribution.","Information")
-            # Try to install WSL Debian
-            Try {
-                & wsl --install --distribution Debian
-                # Success
-            } Catch {
-                # Failure
-                $this.ozoLogger.Write(("Error installing the WSD Debian distribution. Please manually install this distribution and then run this script again to continue. See https://onezeroone.dev/active-directory-lab-part-ii-customization-prerequisites/ for more information."),"Error")
-                $Return = $false
-            }
-        }
-        # Return
-        return $Return
-    }
     # METHODS: Manage local group membership
     Hidden [Boolean] ManageLocalGroup($CurrentUser,$LocalGroup) {
         # Control variable
@@ -203,44 +212,34 @@ Class Main {
         # Return
         return $Return
     }
-    # METHODS: Create VM switches method
-    Hidden [Boolean] CreateVMSwitches() {
+    # METHODS: Create VM switch method
+    Hidden [Boolean] CreateVMSwitch($InternalIP,$InternalSwitchName,$PrefixLength,$Subnet) {
         # Control variable
         [Boolean] $Return = $true
-        # Local variables
-        [String]  $externalAdapter = $null
         # Determine if the Get-VMSwitch cmdlet is available
         If ([Boolean](Get-Command -Name Get-VMSwitch -ErrorAction SilentlyContinue) -eq $true) {
-            # Get-VMSwitch cmdlet is available; determine if the private switch already exists
-            If ([Boolean](Get-VMSwitch -Name "OZO AD Lab Private") -eq $false) {
-                # Report
-                $this.ozoLogger.Write("Creating the Hyper-V OZO AD Lab Private VMSwitch.","Information")
-                # Private switch does not exist; try to create it
+            # Get-VMSwtich cmdlet is available; determine if the NAT switch does not already exist
+            If ([Boolean](Get-VMSwitch -Name $InternalSwitchName -ErrorAction SilentlyContinue) -eq $false) {
+                # NAT switch does not already exist; try to create it and set the IP address
                 Try {
-                    New-VMSwitch -Name "OZO AD Lab Private" -SwitchType Private -ErrorAction Stop
+                    New-VMSwitch -SwitchName $InternalSwitchName -SwitchType Internal -ErrorAction Stop | Out-Null
+                    New-NetIPAddress -IPAddress $InternalIP -PrefixLength $PrefixLength -InterfaceIndex (Get-NetAdapter -ErrorAction Stop | Where-Object { $_.Name -eq ("vEthernet (" + $InternalSwitchName + ")") }).ifIndex -ErrorAction Stop | Out-Null
                     # Success
                 } Catch {
                     # Failure
-                    $this.ozoLogger.Write("Error creating the VM switches. You may need to log out and back in to refresh your group membership. If that does not help, please manually create these switches. Then run this script again to continue. See https://onezeroone.dev/active-directory-lab-part-ii-customization-prerequisites/ for more information.","Error")
+                    $this.ozoLogger.Write(("Error creating the NAT switch with error " + $_ + ". You may need to log out and back in to refresh your group membership. If that does not resolve the issue, then run this script again to continue. See https://onezeroone.dev/active-directory-lab-part-ii-customization-prerequisites/ for more information."),"Error")
                     $Return = $false
                 }
             }
-            # Determine if the external switch already exists
-            If ([Boolean](Get-VMSwitch -Name "OZO AD Lab External") -eq $false) {
-                # Report
-                $this.ozoLogger.Write("Creating the Hyper-V OZO AD Lab External VMSwitch.","Information")
-                # External switch does not exist; call Get-NetAdapter to display available network connections
-                Get-NetAdapter | Out-Host
-                # Prompt the user for the name of the external network connection until they correctly identify an adapter
-                Do {
-                    $externalAdapter = (Read-Host "Above is the output of the Get-NetAdapter command. Type the Name of the network adapter that corresponds with your external network (Internet) connection")
-                } Until ((Get-NetAdapter).Name -Contains $externalAdapter)
-                # Try to create the external switch
+            # Determine if the NAT network already exists
+            If ([Boolean](Get-NetNat -Name $InternalSwitchName -ErrorAction SilentlyContinue) -eq $false) {
+                # NAT network does not already exist; try to create it
                 Try {
-                    New-VMSwitch -Name "OZO AD Lab External" -NetAdapterName $externalAdapter -ErrorAction Stop
+                    New-NetNat -Name $InternalSwitchName -InternalIPInterfaceAddressPrefix ($Subnet + "/" + $PrefixLength.ToString()) -ErrorAction Stop | Out-Null
                     # Success
                 } Catch {
                     # Failure
+                    $this.ozoLogger.Write(("Error creating the NAT network with error " + $_ + ". You may need to manually create this network, then run this script again to continue."),"Error")
                     $Return = $false
                 }
             }
@@ -338,4 +337,4 @@ Class Main {
 }
 
 # MAIN
-[Main]::new($FeatureName,$LocalGroup,$OscdimgExePath,$OZOADLabDirLike,$OZOADLabPath,$OZOADLabISOs,$OZOADLabZipPath,$OZOADLabZipUri,$SimExePath,$WinAdkFileUri,$WinAdkPath) | Out-Null
+[Main]::new($FeatureName,$InternalIP,$InternalSwitchName,$LocalGroup,$OscdimgExePath,$OZOADLabDirLike,$OZOADLabPath,$OZOADLabISOs,$OZOADLabZipPath,$OZOADLabZipUri,$PrefixLength,$SimExePath,$Subnet,$WinAdkFileUri,$WinAdkPath) | Out-Null

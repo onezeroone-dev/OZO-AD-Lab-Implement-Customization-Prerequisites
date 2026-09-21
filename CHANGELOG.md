@@ -2,6 +2,7 @@
 
 |Date|Version|Comment|
 |----|-------|-------|
+|2026-Sep-20|1.1.0|Eliminate the Linux VM; create a Hyper-V NAT switch.|
 |2026-Sep-19|1.0.3|Minor bugfix.|
 |2026-Sep-19|1.0.2|Code refactor.|
 |2026-Sep-15|1.0.1|Bug fixes.|
